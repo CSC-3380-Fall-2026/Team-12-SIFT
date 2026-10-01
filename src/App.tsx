@@ -4,7 +4,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
 import { HashRouter as Router, Route, Routes } from 'react-router-dom'
-import { Workspace } from './Pages/workspace'
+import { Workspace } from './Pages/Workspace'
 import { Home } from './Pages/Home'
 
 function App() {
