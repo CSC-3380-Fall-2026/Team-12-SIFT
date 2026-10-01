@@ -21,7 +21,7 @@ and efficient experience rather as opposed to a painful and mundane activity.
 - Linux
 - Windows
 # Important Links
-Kanban Board: https://github.com/orgs/CSC-3380-Fall-2026/projects/9 \
+Kanban Board: https://team-12-sift.atlassian.net/jira/software/projects/SIFT/boards/1 \
 Designs: [link]\
 Styles Guide(s): [link]
 
