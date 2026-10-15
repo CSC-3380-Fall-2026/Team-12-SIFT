@@ -2,6 +2,11 @@ import './Login.css'
 
 
 export const Login = () => {
+    
+    const handleLogin = () => {
+        // Handle login logic here
+        console.log('Login button clicked');
+    };
     return (
         <div className="login-container">
             <div className="header">
@@ -15,10 +20,17 @@ export const Login = () => {
         <div className="input2">
             <input type="text" placeholder="Password" />
         </div>
-        </div>
-        </div>
 
-    )
+        </div>
+        <button type="button"
+            className="login-button"
+            onClick={handleLogin}
+        >
+            Login
+        </button>
+      </div>
+      
+    );
 
 
 //export function Login() {
