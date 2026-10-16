@@ -13,6 +13,7 @@ from backend.app.annotations import (
 
 app = FastAPI()
 
+media_storage: dict[str, list[str]] = {}
 
 @app.get("/")
 def root():
