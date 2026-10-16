@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS annotations (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    media_id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    x DOUBLE PRECISION NOT NULL,
+    y DOUBLE PRECISION NOT NULL
+);
