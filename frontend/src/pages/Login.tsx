@@ -14,10 +14,10 @@ export const Login = () => {
                 <div className="underline"></div>
             </div>
         <div className="inputs">
-        <div className="input2">
+        <div className="email-input">
             <input type="text" placeholder="Username or Email Address" />
         </div>
-        <div className="input2">
+        <div className="password-input">
             <input type="password" placeholder="Password" />
         </div>
 
