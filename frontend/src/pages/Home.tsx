@@ -19,14 +19,10 @@ export function Home() {
         <div>
           <h1>This is a homepage! Test Test!</h1>
           <Link to="/workspace">Go to Workspace</Link>
+          <br />
+          <Link to="/login">Log in</Link>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+        
       </section>
 
       <div className="ticks"></div>
