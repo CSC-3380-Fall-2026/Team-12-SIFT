@@ -49,3 +49,8 @@ class Workspace(BaseModel):
     id:UUID
     name: str
     pins: list[Pin] = Field(default_factory=list)
+
+class User(Basemodel):
+    name: str
+    password: str
+
