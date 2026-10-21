@@ -21,13 +21,14 @@ export const Login = () => {
             <input type="password" placeholder="Password" />
         </div>
 
+            </div>
+            <button type="button"
+                className="login-button"
+                onClick={handleLogin}
+            >
+                Login
+            </button>
         </div>
-        <button type="button"
-            className="login-button"
-            onClick={handleLogin}
-        >
-            Login
-        </button>
       </div>
       
     );
