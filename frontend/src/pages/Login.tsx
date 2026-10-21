@@ -1,5 +1,5 @@
 import './Login.css'
-
+import cork from '../assets/6443928-large-corkboard-texture-or-background.jpg';
 
 export const Login = () => {
     
@@ -8,19 +8,18 @@ export const Login = () => {
         console.log('Login button clicked');
     };
     return (
-        <div className="login-container">
-            <div className="login-window">
-                <div className="header">
-                    <div className="text">Sign In</div>
-                    <div className="underline"></div>
-                </div>
-            <div className="inputs">
-            <div className="input2">
-                <input type="text" placeholder="Username/Email" />
+        <div className="login-container" style={{backgroundImage: `url(${cork})`}}>
+            <div className="header">
+                <div className="text">Sign In</div>
+                <div className="underline"></div>
             </div>
-            <div className="input2">
-                <input type="text" placeholder="Password" />
-            </div>
+        <div className="inputs">
+        <div className="email-input">
+            <input type="text" placeholder="Username or Email Address" />
+        </div>
+        <div className="password-input">
+            <input type="password" placeholder="Password" />
+        </div>
 
             </div>
             <button type="button"
