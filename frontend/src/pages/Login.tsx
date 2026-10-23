@@ -1,5 +1,6 @@
 import './Login.css'
 import cork from '../assets/6443928-large-corkboard-texture-or-background.jpg';
+import { Link } from 'react-router-dom';
 
 export const Login = () => {
     
@@ -8,7 +9,8 @@ export const Login = () => {
         console.log('Login button clicked');
     };
     return (
-        <div className="login-container" style={{backgroundImage: `url(${cork})`}}>
+        
+        <div className="login-container"> 
             <div className="header">
                 <div className="text">Sign In</div>
                 <div className="underline"></div>
@@ -28,8 +30,18 @@ export const Login = () => {
             >
                 Login
             </button>
+
+
+        <div>
+            <Link to="/register">Don't have an account? Sign Up</Link>
         </div>
-      </div>
+        </div>
+
+
+        
+
+        
+      
       
     );
 
@@ -40,4 +52,6 @@ export const Login = () => {
       //  <h1>This is the Login!</h1>
         //</>
     //)
+    // May readd after login-container
+    //style={{backgroundImage: `url(${cork})`}}>
 }
