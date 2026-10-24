@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, model_validator
 #a class for media with an id that is either an image or file of text to be added in a pin
 class Media(BaseModel):
     id: UUID
-    media_type: Literal["image", "textfile"]
+    media_type: Literal["image", "document"]
     filename: str
     content_type: str
     size_bytes: int = Field(ge=0)
