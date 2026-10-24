@@ -8,14 +8,19 @@ import { Workspace } from './pages/Workspace'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
+import { NeedNavbar } from './NeedNavbar'
 
 function App() {
  
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/workspace" element={<Workspace />} />
+        //if you want a page to have a Navbar, it must included under here. Otherwise, put it with login and register.
+        <Route element={<NeedNavbar />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/workspace" element={<Workspace />} />
+        </Route>
+        
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
