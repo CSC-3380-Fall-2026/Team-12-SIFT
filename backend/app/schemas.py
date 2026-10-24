@@ -5,7 +5,7 @@
 #restrict different types to be used in dif cases
 from typing import Literal
 #unique id gen (MORE RESEARCH NEEDED)
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -13,7 +13,9 @@ from pydantic import BaseModel, Field, model_validator
 class Media(BaseModel):
     id: UUID
     media_type: Literal["image", "textfile"]
-    location: str
+    filename: str
+    content_type: str
+    size_bytes: int = Field(ge=0)
 
 #a class for pins consisting of media or a typed note to be added into a workspace 
 #with a location (x,y) on the board and id
