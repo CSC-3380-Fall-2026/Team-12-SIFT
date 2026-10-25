@@ -50,7 +50,11 @@ class Workspace(BaseModel):
     name: str
     pins: list[Pin] = Field(default_factory=list)
 
+
+#this is really terrible work I'm doing here I gotta do better learning of our base ugh
 class User(Basemodel):
+    id:UUID
     name: str
     password: str
+
 
