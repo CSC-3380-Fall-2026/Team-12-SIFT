@@ -4,7 +4,7 @@
 from backend.app.database import get_db_connection
 from backend.app.schemas import Annotation, AnnotationCreate, AnnotationUpdate
 
-
+"""
 def create_annotation(annotation: AnnotationCreate) -> Annotation:
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
@@ -104,3 +104,5 @@ def delete_annotation(annotation_id: int) -> bool:
             deleted_row = cursor.fetchone()
 
     return deleted_row is not None
+
+"""

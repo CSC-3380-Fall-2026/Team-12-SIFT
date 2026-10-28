@@ -1,5 +1,6 @@
 --RENAME FOR ALL TABLES NOT JUST ANNOTATIONS
 
+"""
 CREATE TABLE IF NOT EXISTS annotations (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS annotations (
     x DOUBLE PRECISION NOT NULL,
     y DOUBLE PRECISION NOT NULL
 );
+"""
 
 --media table
 --validations/testing needed for image vs texts

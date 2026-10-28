@@ -52,6 +52,7 @@ class Workspace(BaseModel):
     name: str
     pins: list[Pin] = Field(default_factory=list)
 
+"""
 class AnnotationCreate(BaseModel):
     user_id: str
     media_id: UUID
@@ -66,3 +67,4 @@ class AnnotationUpdate(BaseModel):
     text: str = Field(min_length=1)
     x: float
     y: float
+    """

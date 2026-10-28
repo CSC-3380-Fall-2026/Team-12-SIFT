@@ -4,12 +4,14 @@ from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.responses import Response
 from uuid import UUID
 
+"""
 from backend.app.annotations import (
     create_annotation,
     get_annotations,
     update_annotation,
     delete_annotation,
 )
+"""
 
 from backend.app.media import(
     get_media,
@@ -17,9 +19,11 @@ from backend.app.media import(
 )
 
 from backend.app.schemas import(
+    """
     Annotation,
     AnnotationCreate,
     AnnotationUpdate,
+    """
     Media,
 )
 
@@ -106,6 +110,7 @@ def get_media_endpoint(media_id: UUID):
         headers = {"Content-Disposition": f'inline; filename="{stored.filename}"'},
     )
 
+"""
 #creates annotation
 @app.post("/annotations", response_model=Annotation, status_code=201)
 def create_annotation_endpoint(annotation: AnnotationCreate):
@@ -138,3 +143,4 @@ def delete_annotation_endpoint(annotation_id: int):
         raise HTTPException(status_code=404, detail="Annotation not found")
 
     return {"message": "Annotation deleted successfully"}
+    """
