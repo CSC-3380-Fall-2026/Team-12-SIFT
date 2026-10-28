@@ -4,7 +4,7 @@
 
 #restrict different types to be used in dif cases
 from typing import Literal
-#unique id gen (MORE RESEARCH NEEDED)
+#unique id gen
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
@@ -51,3 +51,18 @@ class Workspace(BaseModel):
     id:UUID
     name: str
     pins: list[Pin] = Field(default_factory=list)
+
+class AnnotationCreate(BaseModel):
+    user_id: str
+    media_id: UUID
+    text: str = Field(min_length=1)
+    x: float
+    y: float
+
+class Annotation(AnnotationCreate):
+    id: int
+
+class AnnotationUpdate(BaseModel):
+    text: str = Field(min_length=1)
+    x: float
+    y: float

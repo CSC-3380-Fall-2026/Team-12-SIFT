@@ -1,14 +1,10 @@
 #saving and retrieving the data using table
 
-#THIS IS AN IDEA OF HOW IT SHOULD LOOK BUT NOT THE FINAL. WILL NEED UPDATING
-#ONCE BACKEND IS REFACTORED AND FILE INFO IS DECIDED
-
-"""
-from datacalsses import dataclass
+from dataclasses import dataclass
 from typing import Literal
 from uuid import UUID
 
-#from backend.app.database import get_db_connection
+from backend.app.database import get_db_connection
 from backend.app.schemas import Media
 
 MediaType = Literal["image", "document"]
@@ -28,12 +24,14 @@ def saved_media(
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                we need to discuss file types
+                #we need to discuss file types
+                """
                 INSERT INTO media (media_type, filename, content_type, file_data)
                 VALUES (%s, %s, %s, %s)
                 RETURNING id, media_type, filename, content_type,
                           octet_length(file_data)
-                (media_type, filename, content_type, file_data),
+                """,
+                (media_type, filename, content_type, file_data)
             )
             row = cursor.fetchone()
     
@@ -49,14 +47,16 @@ def saved_media(
         size_bytes=row[4],
     )
 
-def get_media(media_id: UUID) -> Stored Media | None:
+def get_media(media_id: UUID) -> StoredMedia | None:
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 #fix this
+                """
                 SELECT filename, content_type, file_data
                 FROM media
-                WHERE id = %s,
+                WHERE id = %s
+                """,
                 (media_id,),
             )
             row = cursor.fetchone()
@@ -69,4 +69,4 @@ def get_media(media_id: UUID) -> Stored Media | None:
         content_type=row[1],
         file_data=row[2],
     )
-    """
+    
