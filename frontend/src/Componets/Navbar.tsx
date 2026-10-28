@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom"
-
+import "./Navbar.css"
 
 export function Navbar() {
     return (
-        <>
+        <div className="Navbar">
         
         <Link to="/workspace">
             <button>Workspace</button>
@@ -13,6 +13,6 @@ export function Navbar() {
             <button>Home</button>
         </Link>
 
-        </>
+        </div>
     )
 }
