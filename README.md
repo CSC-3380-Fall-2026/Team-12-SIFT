@@ -12,7 +12,7 @@ Quality Assurance Tester: Madeline Broussard (mbro469)
 in a single organized workspace. Users can create and edit notes, upload and annotate images,
 extract text data, and connect related content to make their information easier to search,
 organize, and navigate. Our ultimate goal is to make note-taking a more visual, connected,
-and efficient experience rather as opposed to a painful and mundane activity.
+and efficient experience rather than a painful and mundane activity.
 
 ## Platforms Tested on
 - MacOS
