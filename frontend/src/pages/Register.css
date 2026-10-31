@@ -22,5 +22,9 @@
     opacity: 0.4;
     z-index: -1;
 
+}
 
+.register-container .text{
+    color: #17192c;
+    font-size: 20px;
 }
