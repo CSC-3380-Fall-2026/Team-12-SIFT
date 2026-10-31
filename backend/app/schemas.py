@@ -1,10 +1,9 @@
-#this is the fastapi/python model side, once postgresql is set up completely a sql file will handle 
-#actual database table creation and saving. more research needed on that end, but from my current research 
-#and understadning this should be an ok starting point to begin the database stuff in sql next week
+#this is the fastapi/python model side, a sql file will handle 
+#actual database table creation and saving
 
 #restrict different types to be used in dif cases
 from typing import Literal
-#unique id gen (MORE RESEARCH NEEDED)
+#unique id gen
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
@@ -51,3 +50,20 @@ class Workspace(BaseModel):
     id:UUID
     name: str
     pins: list[Pin] = Field(default_factory=list)
+
+"""
+class AnnotationCreate(BaseModel):
+    user_id: str
+    media_id: UUID
+    text: str = Field(min_length=1)
+    x: float
+    y: float
+
+class Annotation(AnnotationCreate):
+    id: int
+
+class AnnotationUpdate(BaseModel):
+    text: str = Field(min_length=1)
+    x: float
+    y: float
+    """
