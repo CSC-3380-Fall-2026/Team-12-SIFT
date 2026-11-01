@@ -8,6 +8,7 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
+from pydantic import EmailStr
 
 #a class for media with an id that is either an image or file of text to be added in a pin
 class Media(BaseModel):
@@ -48,6 +49,11 @@ class Pin(BaseModel):
 
 #a class for a workspace that has a name, id, and consists of pins in a list
 class Workspace(BaseModel):
-    id:UUID
+    id: UUID
     name: str
     pins: list[Pin] = Field(default_factory=list)
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
