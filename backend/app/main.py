@@ -12,6 +12,8 @@ from backend.app.annotations import (
     delete_annotation,
 )
 
+from psycopg.errors import UniqueViolation
+
 app = FastAPI()
 media_storage: dict[str, list[str]] = {}
 
@@ -48,4 +50,10 @@ def delete_annotation_endpoint(annotation_id: int):
 
 @app.post("/register", response_model=UserResponse, status_code=201)
 def register_user(user: UserCreate):
-    return create_user(user)
+    try:
+        return create_user(user)
+    except UniqueViolation:
+        raise HTTPException(
+            status_code=409,
+            detail="Username or email address already in use. Please try a different one."
+        )
