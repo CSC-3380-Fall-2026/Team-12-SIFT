@@ -1,11 +1,24 @@
+import { useState } from 'react';
 import './Register.css'
-import cork from '../assets/6443928-large-corkboard-texture-or-background.jpg';
 import { Link } from 'react-router-dom';
 
 export const Register = () => {
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    
     const handleRegister = () => {
         // Handle register logic here
-        console.log('Register button clicked!');
+        // use strict equality test for more security to ensure that user confirms password
+        if (password !== confirmPassword) {
+            alert("Password mismatch! Please try again.");
+            return;
+        }
+        // displays registration details
+        console.log("Registration details:", {
+            username, email, password
+        });
     };
     return (
         <div className="register-container" >
@@ -18,14 +31,41 @@ export const Register = () => {
                 handleRegister();
             }}>
                 <div className="inputs">
+                    <div className="username-input">
+                        <input
+                        type="text"
+                        placeholder="username"
+                        required
+                        value={username}
+                        onChange={(event) => setUsername(event.target.value)}
+                        />
+                    </div>
                     <div className="email-input">
-                        <input type="text" placeholder="Username or Email Address" />
+                        <input
+                        type="email"
+                        placeholder="email address"
+                        required
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        />
                     </div>
                     <div className="password-input">
-                        <input type="password" placeholder="Password" />
+                        <input
+                        type="password"
+                        placeholder="password"
+                        required
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        />
                     </div>
                     <div className="confirm-password-input">
-                        <input type="password" placeholder="Confirm Password" />
+                        <input
+                        type="password"
+                        placeholder="confirm your password"
+                        required
+                        value={confirmPassword}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        />
                     </div>
                    {/* <div className="checkbox">
                         <input type="checkbox" id="option" />
