@@ -1,0 +1,511 @@
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\annotations_schema.sql
+========================================
+--RENAME FOR ALL TABLES NOT JUST ANNOTATIONS
+
+CREATE TABLE IF NOT EXISTS annotations (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    media_id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    x DOUBLE PRECISION NOT NULL,
+    y DOUBLE PRECISION NOT NULL
+);
+
+--media table
+--validations/testing needed for image vs texts
+CREATE TABLE IF NOT EXISTS media(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), --discuss if uuid or serial key
+    media_type TEXT NOT NULL CHECK (media_type IN ('image', 'document')),
+    filename TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    file_data BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\requirements.txt
+========================================
+agent-detector==2.0.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+certifi==2026.7.22
+click==8.5.0
+colorama==0.4.6
+detect-installer==0.2.1
+dnspython==2.8.0
+email-validator==2.3.0
+fastapi==0.142.2
+fastapi-cli==0.0.32
+fastapi-cloud-cli==0.26.0
+fastar==0.12.0
+googleapis-common-protos==1.75.5
+h11==0.16.0
+httpcore==1.0.9
+httptools==0.8.0
+httpx==0.28.1
+idna==3.20
+Jinja2==3.1.6
+markdown-it-py==4.2.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+opentelemetry-api==1.45.0
+opentelemetry-exporter-http-transport==0.66b0
+opentelemetry-exporter-otlp-common==0.66b0
+opentelemetry-exporter-otlp-proto-common==1.45.0
+opentelemetry-exporter-otlp-proto-http==1.45.0
+opentelemetry-proto==1.45.0
+opentelemetry-sdk==1.45.0
+opentelemetry-semantic-conventions==0.66b0
+protobuf==7.36.2
+psycopg==3.3.6
+psycopg-binary==3.3.6
+pydantic==2.13.5
+pydantic-extra-types==2.11.1
+pydantic-settings==2.15.0
+pydantic_core==2.46.5
+Pygments==2.21.0
+python-dotenv==1.2.4
+python-multipart==0.0.32
+PyYAML==6.0.3
+rich==15.0.0
+rich-toolkit==0.20.5
+rignore==0.8.1
+sentry-sdk==2.71.0
+shellingham==1.5.4
+starlette==1.7.0
+typer==0.27.2
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzdata==2026.4
+urllib3==2.8.0
+uvicorn==0.54.0
+watchfiles==1.3.0
+websockets==17.1
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\app\annotations.py
+========================================
+import os
+
+import psycopg
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+
+
+load_dotenv()
+
+
+class AnnotationCreate(BaseModel):
+    user_id: str
+    media_id: str
+    text: str = Field(min_length=1)
+    x: float
+    y: float
+
+
+class Annotation(AnnotationCreate):
+    id: int
+
+
+def get_db_connection():
+    return psycopg.connect(
+        host="localhost",
+        port=5432,
+        dbname="sift",
+        user="postgres",
+        password=os.getenv("POSTGRES_PASSWORD"),
+        connect_timeout=5,
+    )
+
+
+def create_annotation(annotation: AnnotationCreate) -> Annotation:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO annotations (user_id, media_id, text, x, y)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    annotation.user_id,
+                    annotation.media_id,
+                    annotation.text,
+                    annotation.x,
+                    annotation.y,
+                ),
+            )
+
+            annotation_id = cursor.fetchone()[0]
+
+    return Annotation(id=annotation_id, **annotation.model_dump())
+
+def get_annotations(media_id: str) -> list[Annotation]:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, user_id, media_id, text, x, y
+                FROM annotations
+                WHERE media_id = %s
+                ORDER BY id
+                """,
+                (media_id,),
+            )
+
+            rows = cursor.fetchall()
+
+    return [
+        Annotation(
+            id=row[0],
+            user_id=row[1],
+            media_id=row[2],
+            text=row[3],
+            x=row[4],
+            y=row[5],
+        )
+        for row in rows
+    ]
+class AnnotationUpdate(BaseModel):
+    text: str = Field(min_length=1)
+    x: float
+    y: float
+
+
+def update_annotation(
+    annotation_id: int,
+    update: AnnotationUpdate,
+) -> Annotation | None:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE annotations
+                SET text = %s, x = %s, y = %s
+                WHERE id = %s
+                RETURNING id, user_id, media_id, text, x, y
+                """,
+                (
+                    update.text,
+                    update.x,
+                    update.y,
+                    annotation_id,
+                ),
+            )
+
+            row = cursor.fetchone()
+
+    if row is None:
+        return None
+
+    return Annotation(
+        id=row[0],
+        user_id=row[1],
+        media_id=row[2],
+        text=row[3],
+        x=row[4],
+        y=row[5],
+    )
+def delete_annotation(annotation_id: int) -> bool:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM annotations
+                WHERE id = %s
+                RETURNING id
+                """,
+                (annotation_id,),
+            )
+
+            deleted_row = cursor.fetchone()
+
+    return deleted_row is not None
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\app\database.py
+========================================
+import psycopg
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+connection = psycopg.connect(
+    host="localhost",
+    port=5432,
+    dbname="sift",
+    user="postgres",
+    password=os.getenv("POSTGRES_PASSWORD")
+)
+
+print("Successfully connected to database!")
+
+connection.close()
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\app\main.py
+========================================
+from fastapi import FastAPI, HTTPException
+
+from backend.app.annotations import (
+    Annotation,
+    AnnotationCreate,
+    AnnotationUpdate,
+    create_annotation,
+    get_annotations,
+    update_annotation,
+    delete_annotation,
+)
+
+
+app = FastAPI()
+
+media_storage: dict[str, list[str]] = {}
+
+@app.get("/")
+def root():
+    return {"message": "Backend for SIFT project is running"}
+
+
+@app.post("/annotations", response_model=Annotation, status_code=201)
+def create_annotation_endpoint(annotation: AnnotationCreate):
+    return create_annotation(annotation)
+
+
+@app.get("/annotations/{media_id}", response_model=list[Annotation])
+def get_annotations_endpoint(media_id: str):
+    return get_annotations(media_id)
+
+
+@app.put("/annotations/{annotation_id}", response_model=Annotation)
+def update_annotation_endpoint(
+    annotation_id: int,
+    update: AnnotationUpdate,
+):
+    annotation = update_annotation(annotation_id, update)
+
+    if annotation is None:
+        raise HTTPException(status_code=404, detail="Annotation not found")
+
+    return annotation
+
+
+@app.delete("/annotations/{annotation_id}")
+def delete_annotation_endpoint(annotation_id: int):
+    deleted = delete_annotation(annotation_id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Annotation not found")
+
+    return {"message": "Annotation deleted successfully"}
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\app\media.py
+========================================
+#saving and retrieving the data using table
+
+#THIS IS AN IDEA OF HOW IT SHOULD LOOK BUT NOT THE FINAL. WILL NEED UPDATING
+#ONCE BACKEND IS REFACTORED AND FILE INFO IS DECIDED
+
+"""
+from datacalsses import dataclass
+from typing import Literal
+from uuid import UUID
+
+#from backend.app.database import get_db_connection
+from backend.app.schemas import Media
+
+MediaType = Literal["image", "document"]
+
+@dataclass(frozen=True)
+class StoredMedia:
+    filename: str
+    content_type: str
+    file_data: bytes
+
+def saved_media(
+    media_type: MediaType,
+    filename: str,
+    content_type: str,
+    file_data: bytes,
+) -> Media:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                we need to discuss file types
+                INSERT INTO media (media_type, filename, content_type, file_data)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id, media_type, filename, content_type,
+                          octet_length(file_data)
+                (media_type, filename, content_type, file_data),
+            )
+            row = cursor.fetchone()
+    
+    #checks that there is a record
+    if row is None:
+        raise RuntimeError("media record missing")
+
+    return Media(
+        id=row[0],
+        media_type=row[1],
+        filename=row[2],
+        content_type=row[3],
+        size_bytes=row[4],
+    )
+
+def get_media(media_id: UUID) -> Stored Media | None:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                #fix this
+                SELECT filename, content_type, file_data
+                FROM media
+                WHERE id = %s,
+                (media_id,),
+            )
+            row = cursor.fetchone()
+
+    if row is None:
+        return None
+
+    return StoredMedia(
+        filename=row[0],
+        content_type=row[1],
+        file_data=row[2],
+    )
+    """
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\app\schemas.py
+========================================
+#this is the fastapi/python model side, once postgresql is set up completely a sql file will handle 
+#actual database table creation and saving. more research needed on that end, but from my current research 
+#and understadning this should be an ok starting point to begin the database stuff in sql next week
+
+#restrict different types to be used in dif cases
+from typing import Literal
+#unique id gen (MORE RESEARCH NEEDED)
+from uuid import UUID
+
+from pydantic import BaseModel, Field, model_validator
+
+#a class for media with an id that is either an image or file of text to be added in a pin
+class Media(BaseModel):
+    id: UUID
+    media_type: Literal["image", "document"]
+    filename: str
+    content_type: str
+    size_bytes: int = Field(ge=0)
+
+#a class for pins consisting of media or a typed note to be added into a workspace 
+#with a location (x,y) on the board and id
+#text files are uploadable media, notes will be made and edited in site, therefore they r different
+class Pin(BaseModel):
+    id: UUID
+    item_type: Literal["media", "note"]
+    x: float
+    y: float
+    media_id: UUID | None = None
+    note_content: str | None = None
+
+#this checks for correct info for different pin types, 
+#media cannot have note content and notes cant have media ids ()
+#this type of validation is a little lost on me so this may be wrong, might need updates 
+#and more implementations for other checks elsewhere but i want to start with this
+    @model_validator(mode="after")
+    def check_item_type(self):
+        if self.item_type == "media":
+            if self.media_id is None:
+                raise ValueError("media id needed")
+            if self.note_content is not None:
+                raise ValueError("media pins cannot have note content")
+        elif self.item_type == "note":
+            if not self.note_content or not self.note_content.strip(): 
+                raise ValueError("note content needed")
+            if self.media_id is not None:
+                raise ValueError("note pins cannot have media ids")
+        return self
+
+#a class for a workspace that has a name, id, and consists of pins in a list
+class Workspace(BaseModel):
+    id:UUID
+    name: str
+    pins: list[Pin] = Field(default_factory=list)
+
+
+========================================
+FILE: C:\Users\User\OneDrive\Documents\GitHub\Team-12-SIFT\backend\tests\test_schema.py
+========================================
+from uuid import UUID
+
+import pytest
+from pydantic import ValidationError
+
+from app.schemas import Media, Pin, Workspace
+
+#we need to discuss specifics of media file types and some 
+#details on the project in general. these are very basic
+#tests that i used to mainly learn how they work. more
+#will be added/altered here when i get more info
+
+#fixed UUID for testing
+MEDIA_ID = UUID("11111111-1111-4111-8111-111111111111")
+PIN_ID = UUID("22222222-2222-4222-8222-222222222222")
+WORKSPACE_ID = UUID("33333333-3333-4333-8333-333333333333")
+
+
+#makes sure media takes the correct file type (generic for now)
+def test_media_accepts_valid_data():
+    media = Media(
+        id=MEDIA_ID,
+        media_type="image",
+        location="uploads/photo.jpg"
+    )
+    assert media.media_type == "image"
+
+
+#checks to make sure that a media pin cant be made without a media id attached to it
+def test_media_pin_requires_media_id():
+    with pytest.raises(ValidationError):
+        Pin(
+            id=PIN_ID,
+            item_type="media",
+            x=0,
+            y=0,
+        )
+
+
+#makes the test use these note contents in the test
+@pytest.mark.parametrize("content", [None, "", " "])
+#makes sure that note pins cant be made with empty or blank notes
+def test_note_pin_requires_nonempty_content(content):
+    with pytest.raises(ValidationError):
+        Pin(
+            id=PIN_ID,
+            item_type="note",
+            x=0,
+            y=0,
+            note_content=content,
+        )
+
+#checks what happens when there is an empty workspace with no pins to pick from
+#(default behavior)
+def test_workspace_without_pins():
+    workspace = Workspace(
+        id=WORKSPACE_ID,
+        name="My workspace",
+    )
+    assert workspace.pins == []
+
