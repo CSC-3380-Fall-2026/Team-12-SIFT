@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from backend.app.schemas import UserCreate
+from backend.app.users import UserResponse, create_user
 
 from backend.app.annotations import (
     Annotation,
@@ -10,31 +12,25 @@ from backend.app.annotations import (
     delete_annotation,
 )
 
-
 app = FastAPI()
-
 media_storage: dict[str, list[str]] = {}
+
+# API endpoints
 
 @app.get("/")
 def root():
-    return {"message": "Backend for SIFT project is running"}
-
+    return {"message": "SIFT's backend is running!"}
 
 @app.post("/annotations", response_model=Annotation, status_code=201)
 def create_annotation_endpoint(annotation: AnnotationCreate):
     return create_annotation(annotation)
 
-
 @app.get("/annotations/{media_id}", response_model=list[Annotation])
 def get_annotations_endpoint(media_id: str):
     return get_annotations(media_id)
 
-
 @app.put("/annotations/{annotation_id}", response_model=Annotation)
-def update_annotation_endpoint(
-    annotation_id: int,
-    update: AnnotationUpdate,
-):
+def update_annotation_endpoint(annotation_id: int, update: AnnotationUpdate):
     annotation = update_annotation(annotation_id, update)
 
     if annotation is None:
@@ -42,12 +38,14 @@ def update_annotation_endpoint(
 
     return annotation
 
-
 @app.delete("/annotations/{annotation_id}")
 def delete_annotation_endpoint(annotation_id: int):
     deleted = delete_annotation(annotation_id)
-
     if not deleted:
         raise HTTPException(status_code=404, detail="Annotation not found")
 
     return {"message": "Annotation deleted successfully"}
+
+@app.post("/register", response_model=UserResponse, status_code=201)
+def register_user(user: UserCreate):
+    return create_user(user)
