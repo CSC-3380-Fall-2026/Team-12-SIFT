@@ -1,12 +1,9 @@
 import os
-
 import psycopg
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-
 load_dotenv()
-
 
 class AnnotationCreate(BaseModel):
     user_id: str
@@ -15,10 +12,8 @@ class AnnotationCreate(BaseModel):
     x: float
     y: float
 
-
 class Annotation(AnnotationCreate):
     id: int
-
 
 def get_db_connection():
     return psycopg.connect(
@@ -29,7 +24,6 @@ def get_db_connection():
         password=os.getenv("POSTGRES_PASSWORD"),
         connect_timeout=5,
     )
-
 
 def create_annotation(annotation: AnnotationCreate) -> Annotation:
     with get_db_connection() as connection:
@@ -50,7 +44,6 @@ def create_annotation(annotation: AnnotationCreate) -> Annotation:
             )
 
             annotation_id = cursor.fetchone()[0]
-
     return Annotation(id=annotation_id, **annotation.model_dump())
 
 def get_annotations(media_id: str) -> list[Annotation]:
@@ -83,7 +76,6 @@ class AnnotationUpdate(BaseModel):
     text: str = Field(min_length=1)
     x: float
     y: float
-
 
 def update_annotation(
     annotation_id: int,
@@ -119,6 +111,7 @@ def update_annotation(
         x=row[4],
         y=row[5],
     )
+
 def delete_annotation(annotation_id: int) -> bool:
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
@@ -132,5 +125,4 @@ def delete_annotation(annotation_id: int) -> bool:
             )
 
             deleted_row = cursor.fetchone()
-
     return deleted_row is not None
