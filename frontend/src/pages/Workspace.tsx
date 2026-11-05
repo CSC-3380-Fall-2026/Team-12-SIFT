@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import {
-    Upload, Type, Pencil, Hand, MousePointer2
-} from 'lucide-react';
+import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
 import './Workspace.css';
 
 export function Workspace() {
@@ -81,23 +79,7 @@ export function Workspace() {
                 </ul>
                 */}
             </section>
-            <section className="editing-toolbar" aria-label="Editing tools">
-                <button type="button" aria-label="Upload media" title="Upload media">
-                    <Upload size={24} />
-                </button>
-                <button type="button" aria-label="Edit text" title="Edit text">
-                    <Type size={24} />
-                </button>
-                <button type="button" aria-label="Draw" title="Draw">
-                    <Pencil size={24} />
-                </button>
-                <button type="button" aria-label="Move" title="Move">
-                    <Hand size={24} />
-                </button>
-                <button type="button" aria-label="Select" title="Select">
-                    <MousePointer2 size={24} />
-                </button>
-            </section>
+            <WorkspaceNavbar />
             {/* Note editor with a live character counter. */}
             <section>
                 <h2>Note Editor</h2>
