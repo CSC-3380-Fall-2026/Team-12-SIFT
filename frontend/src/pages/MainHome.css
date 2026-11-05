@@ -1,0 +1,103 @@
+.mainhome-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 98.6vw;
+    height: 100vh;
+    background-image: url('../assets/6443928-large-corkboard-texture-or-background.jpg');
+    background-size: cover;
+    background-position: center;
+
+    opacity: 0.4;
+    z-index: -1;
+
+
+}
+
+.mainhome-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.main-text{
+    
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 68%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+
+}
+
+.main-text-appear{
+
+    color: #17192c;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.rope-sign{
+
+    max-width: 600px;
+    height: auto;
+    display: block;
+}
+
+.first-sign-wrapper{
+
+    position: relative;
+    display: inline-block;
+}
+
+.second-part{
+
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.notepad-part{
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.corkboard{
+
+    position: relative;
+    display: inline-block;
+}
+
+.board{
+
+    text-align: left;
+    position: relative;
+    display: inline block;
+    
+}
+
+.notepad{
+
+    max-width: 250px;
+    height: auto;
+    display: block;
+    transform: rotate(15deg);
+
+}

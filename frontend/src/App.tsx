@@ -9,6 +9,7 @@ import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { NeedNavbar } from './NeedNavbar'
+import { MainHome } from './pages/MainHome'
 
 function App() {
  
@@ -21,8 +22,10 @@ function App() {
           <Route path="/workspace" element={<Workspace />} />
         </Route>
         
+      
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/mainhome" element={<MainHome />} />
       </Routes>
      </Router>
   )
