@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
 import './Workspace.css';
 
@@ -10,12 +10,46 @@ export function Workspace() {
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
     const [showCharCount, setShowCharCount] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(true);
+    const [isMediaFolderOpen, setIsMediaFolderOpen] = useState<boolean>(false);
 
-    //const mediaItems: string[] = ['photo.jpg', 'video.mp4', 'document.png']
+    // create empty mediaItems folder as JavaScript array
+    // point to note: backend integration will populate this later on
+    type MediaItem = {
+        id: string;
+        media_type: 'image' | 'document';
+        filename: string;
+        content_type: string;
+        size_bytes: number;
+    };
+
+    const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+    const [mediaLoading, setMediaLoading] = useState<boolean>(false);
+    const [mediaError, setMediaError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchMedia = async () => {
+            setMediaLoading(true);
+            setMediaError(null);
+            try {
+                const response = await fetch('http://127.0.0.1:8000/media');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch media files.');
+                }
+                const data: MediaItem[] = await response.json();
+                setMediaItems(data);
+            } catch (error) {
+                setMediaError(
+                    error instanceof Error ? error.message : 'Something went wrong.'
+                );
+            } finally {
+                setMediaLoading(false);
+            }
+        };
+        fetchMedia();
+    }, []);
 
     const handleMedia = () => {
-        // Handle media logic here
-        console.log('Media button clicked');
+        setIsMediaFolderOpen(!isMediaFolderOpen);
     };
 
     return (
@@ -64,26 +98,39 @@ export function Workspace() {
                     type="button"
                     className="media-button"
                     onClick={handleMedia}
+                    aria-expanded={isMediaFolderOpen}
                 >
-                    Open Media Folder
+                    { isMediaFolderOpen ? 'Close Media Folder' : 'Open Media Folder'}
                 </button>
-
-                {/* Existing media folder code is preserved for future development. */}
-                {/* 
-                <h2>Media Folder</h2>
-                <p>Stored media: {mediaItems.length}</p>
-                <ul>
-                    {mediaItems.map((media) => (
-                        <li key={media}>{media}</li>
-                    ))}
-                </ul>
-                */}
+                {isMediaFolderOpen && (
+                    <div>
+                        <h2>Media Folder</h2>
+                        {mediaLoading ? (
+                            <p>Loading media...</p>
+                        ) : mediaError ? (
+                            <p>{mediaError}</p>
+                        ) : mediaItems.length === 0 ? (
+                            <p>The media folder is currently empty.</p>
+                        ) : (
+                            <ul>
+                                {mediaItems.map((item) => (
+                                    <li key={item.id}>
+                                        <strong>{item.filename}</strong>
+                                        {' -- '}
+                                        {item.media_type}
+                                        {' -- '}
+                                        {(item.size_bytes / 1024).toFixed(1)} KB
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                )}
             </section>
             <WorkspaceNavbar />
             {/* Note editor with a live character counter. */}
             <section>
                 <h2>Note Editor</h2>
-
                 {/* The text area updates noteText whenever the user types or deletes text. */}
                 <textarea
                     value={noteText}
