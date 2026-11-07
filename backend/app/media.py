@@ -1,15 +1,8 @@
-#saving and retrieving the data using table
-
-#THIS IS AN IDEA OF HOW IT SHOULD LOOK BUT NOT THE FINAL. WILL NEED UPDATING
-#ONCE BACKEND IS REFACTORED AND FILE INFO IS DECIDED
-
-"""
-from datacalsses import dataclass
+from dataclasses import dataclass
 from typing import Literal
 from uuid import UUID
-
-#from backend.app.database import get_db_connection
 from backend.app.schemas import Media
+from backend.app.annotations import get_db_connection
 
 MediaType = Literal["image", "document"]
 
@@ -19,54 +12,66 @@ class StoredMedia:
     content_type: str
     file_data: bytes
 
-def saved_media(
-    media_type: MediaType,
-    filename: str,
-    content_type: str,
-    file_data: bytes,
-) -> Media:
+def save_media(media_type: MediaType, filename: str, content_type: str, file_data: bytes) -> Media:
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                we need to discuss file types
+                """
                 INSERT INTO media (media_type, filename, content_type, file_data)
                 VALUES (%s, %s, %s, %s)
-                RETURNING id, media_type, filename, content_type,
-                          octet_length(file_data)
-                (media_type, filename, content_type, file_data),
+                RETURNING id, media_type, filename, content_type, octet_length(file_data) as size_bytes;
+                """,
+                (media_type, filename, content_type, file_data)
             )
             row = cursor.fetchone()
-    
-    #checks that there is a record
-    if row is None:
-        raise RuntimeError("media record missing")
+            if row is None:
+                raise RuntimeError("Alert: Unable to save media record to the database.")
+            return Media(
+                id=row[0],
+                media_type=row[1],
+                filename=row[2],
+                content_type=row[3],
+                size_bytes=row[4]
+            )
 
-    return Media(
-        id=row[0],
-        media_type=row[1],
-        filename=row[2],
-        content_type=row[3],
-        size_bytes=row[4],
-    )
-
-def get_media(media_id: UUID) -> Stored Media | None:
+def get_media(media_id: UUID) -> StoredMedia | None:
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                #fix this
+                """
                 SELECT filename, content_type, file_data
                 FROM media
-                WHERE id = %s,
-                (media_id,),
+                WHERE id = %s;
+                """,
+                (media_id,)
             )
             row = cursor.fetchone()
+            if row is None:
+                return None
+            return StoredMedia(
+                filename=row[0],
+                content_type=row[1],
+                file_data=row[2]
+            )
 
-    if row is None:
-        return None
-
-    return StoredMedia(
-        filename=row[0],
-        content_type=row[1],
-        file_data=row[2],
-    )
-    """
+def get_all_media() -> list[Media]:
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, media_type, filename, content_type, octet_length(file_data)
+                FROM media
+                ORDER BY created_at DESC;
+                """
+            )
+            rows = cursor.fetchall()
+            return [
+                Media(
+                    id=row[0],
+                    media_type=row[1],
+                    filename=row[2],
+                    content_type=row[3],
+                    size_bytes=row[4]
+                )
+                for row in rows
+            ]
