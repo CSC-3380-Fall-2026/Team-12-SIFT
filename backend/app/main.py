@@ -11,10 +11,15 @@ from backend.app.annotations import (
     delete_annotation,
 )
 from backend.app.media import save_media, get_media, get_all_media
+from backend.app.ocr import extract_text
 from psycopg.errors import UniqueViolation
 from uuid import UUID
 
-# start fastapi application
+# load env variables
+from dotenv import load_dotenv
+load_dotenv()
+
+# start fastapi (backend) application
 app = FastAPI()
 
 # fastapi endpoint
@@ -64,8 +69,25 @@ def get_media_endpoint(media_id: UUID):
         media_type=media.content_type,
     )
 
-# annotation endpoints
+# ocr endpoint
+@app.post("/media/{media_id}/ocr")
+async def extract_text_endpoint(media_id: UUID):
+    media = get_media(media_id)
+    if media is None:
+        raise HTTPException(status_code=404, detail="Error: Media not found.")
+    if not media.content_type.startswith("image/"):
+        raise HTTPException(status_code=415, detail="Warning: OCR is only supported for images.")
+    extracted_text = await extract_text(
+        file_data=media.file_data,
+        filename=media.filename
+    )
+    return {
+        "media_id": str(media_id),
+        "filename": media.filename,
+        "extracted_text": extracted_text
+    }
 
+# annotation endpoints
 @app.post("/annotations", response_model=Annotation, status_code=201)
 def create_annotation_endpoint(annotation: AnnotationCreate):
     return create_annotation(annotation)
