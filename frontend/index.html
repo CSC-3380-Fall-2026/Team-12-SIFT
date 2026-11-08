@@ -1,6 +1,26 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!--the header portion to make the visual workspace possible-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Tracker</title>
+    <style>
+        #coordinate-box {
+            width: 400px;
+            height: 300px;
+            background-color: #4e4e4e;
+            border: 2px solid #000000;
+            position: relative;
+            cursor: crosshair;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .log { text-align: center; font-family: monospace; font-size: 16px; }
+    </style>
+</head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,4 +30,38 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
+   <!--the body portion to make the visual workspace possible-->
+  <body>
+    <div id="coordinate-box">Click inside this box</div>
+    <div class="log" id="coords-display">X: 0, Y: 0</div>
+
+    <script>
+        const box = document.getElementById('coordinate-box');
+        const display = document.getElementById('coords-display');
+
+        box.addEventListener('click', function(event) {
+            //get size of box
+            const rect = box.getBoundingClientRect();
+            
+            //Calculate xy from top corner
+            const x = Math.round(event.clientX - rect.left);
+            const y = Math.round(event.clientY - rect.top);
+
+            //update ui
+            display.innerText = `X: ${x}, Y: ${y}`;
+
+            //send coords to backend, unknown if functioning
+            fetch('http://127.0.0', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ x: x, y: y })
+            })
+            .then(response => response.json())
+            .then(data => console.log('Saved:', data))
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
 </html>
