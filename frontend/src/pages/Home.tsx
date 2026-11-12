@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import profileIcon from '../assets/profile-icon.png'
 // heroImg from './src/assets/hero.png'
 //import reactLogo from './src/assets/react.svg'
 //import viteLogo from './src/assets/vite.svg'
@@ -10,6 +11,12 @@ export function Home() {
 
   return (
     <>
+      <img
+        src={profileIcon}
+        alt="Profile"
+        className="home-profile-icon"
+      />
+
       <section id="center">
        {/*  <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />

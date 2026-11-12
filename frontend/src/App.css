@@ -182,3 +182,12 @@
     border-right-color: var(--border);
   }
 }
+
+.home-profile-icon {
+  position: absolute;
+  top: 20px;
+  right: 10px;
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+}
