@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import profileIcon from '../assets/profile-icon.png'
@@ -8,14 +9,32 @@ import profileIcon from '../assets/profile-icon.png'
 
 export function Home() {
   const [count, setCount] = useState(0)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   return (
     <>
-      <img
-        src={profileIcon}
-        alt="Profile"
-        className="home-profile-icon"
-      />
+      <section className="home-profile-container">
+        <button
+          type="button"
+          className="profile-button"
+          onClick={() => setIsProfileOpen(!isProfileOpen)}
+          aria-label="Profile"
+          aria-expanded={isProfileOpen}
+        >
+          <img
+            src={profileIcon}
+            alt=""
+            className="home-profile-icon"
+          />
+        </button>
+        {isProfileOpen && (
+          <div className="settings-dropdown profile-dropdown">
+            <div className="profile-menu-option">
+              Settings
+            </div>
+          </div>
+        )}
+      </section>
 
       <section id="center">
        {/*  <div className="hero">
@@ -29,11 +48,11 @@ export function Home() {
           <br />
           <Link to="/login">Log in</Link>
         </div>
-        
+
       </section>
 
       <div className="ticks"></div>
-  
+
       <div className="ticks"></div>
       <section id="spacer"></section>
     </>
