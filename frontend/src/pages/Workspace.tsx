@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
+import profileIcon from '../assets/profile-icon.png';
 import './Workspace.css';
 
 export function Workspace() {
@@ -7,6 +8,7 @@ export function Workspace() {
     // React updates the screen whenever this value changes.
     const [noteText, setNoteText] = useState<string>('');
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+    const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
     const [showCharCount, setShowCharCount] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(true);
@@ -54,6 +56,29 @@ export function Workspace() {
 
     return (
         <>
+            <section className="profile-container">
+                <button
+                    type="button"
+                    className="profile-button"
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    aria-label="Profile"
+                    aria-expanded={isProfileOpen}
+                >
+                    <img
+                        src={profileIcon}
+                        alt=""
+                        className="profile-icon"
+                    />
+                </button>
+                {isProfileOpen && (
+                    <div className="settings-dropdown profile-dropdown">
+                        <div className="profile-menu-option">
+                            Settings
+                        </div>
+                    </div>
+                )}
+            </section>
+
             <h1>This is a workspace!</h1>
             <section className="settings-container">
                 <button

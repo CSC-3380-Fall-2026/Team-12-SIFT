@@ -177,17 +177,52 @@
     left: 0;
     border-left-color: var(--border);
   }
+
   &::after {
     right: 0;
     border-right-color: var(--border);
   }
 }
 
-.home-profile-icon {
+.home-profile-container {
   position: absolute;
   top: 20px;
   right: 10px;
+  z-index: 20;
+}
+
+.home-profile-container .profile-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.home-profile-icon {
+  display: block;
   width: 45px;
   height: 45px;
   object-fit: contain;
+}
+
+.home-profile-container .settings-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  width: 200px;
+  height: 130px;
+  padding: 12px;
+  box-sizing: content-box;
+  background-color: white;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+}
+
+.home-profile-container .profile-menu-option {
+  padding: 8px 4px;
+  color: #706879;
+  font-size: 16px;
 }
