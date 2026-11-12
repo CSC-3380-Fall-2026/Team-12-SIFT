@@ -9,6 +9,7 @@ import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { NeedNavbar } from './NeedNavbar'
+import { NeedHomeHeader } from './NeedHomeHeader'
 import { MainHome } from './pages/MainHome'
 
 function App() {
@@ -25,7 +26,11 @@ function App() {
       
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/mainhome" element={<MainHome />} />
+
+        //for main home page ONLY, because it needs the header and footer.
+        <Route element={<NeedHomeHeader />}>
+          <Route path="/mainhome" element={<MainHome />} />
+        </Route>
       </Routes>
      </Router>
   )
