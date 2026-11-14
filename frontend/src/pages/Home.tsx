@@ -8,7 +8,6 @@ import profileIcon from '../assets/profile-icon.png'
 //import './App.css'
 
 export function Home() {
-  const [count, setCount] = useState(0)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   return (
