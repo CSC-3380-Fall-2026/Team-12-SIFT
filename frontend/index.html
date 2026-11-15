@@ -4,13 +4,13 @@
     <!--the header portion to make the visual workspace possible-->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coordinate Tracker</title>
+    <title>Workspace</title>
     <style>
         #coordinate-box {
-            width: 400px;
-            height: 300px;
+            width: 1000px;
+            height: 1000px;
             background-color: #4e4e4e;
-            border: 2px solid #000000;
+            border: 5px solid #000000;
             position: relative;
             cursor: crosshair;
             margin: 20px auto;
@@ -18,7 +18,7 @@
             align-items: center;
             justify-content: center;
         }
-        .log { text-align: center; font-family: monospace; font-size: 16px; }
+        .log { text-align: center; font-family: Arial, Helvetica, sans-serif; font-size: 32px; }
     </style>
 </head>
     <meta charset="UTF-8" />
@@ -32,7 +32,7 @@
   </body>
    <!--the body portion to make the visual workspace possible-->
   <body>
-    <div id="coordinate-box">Click inside this box</div>
+    <div id="coordinate-box">visual workspace test</div>
     <div class="log" id="coords-display">X: 0, Y: 0</div>
 
     <script>
@@ -51,6 +51,7 @@
             display.innerText = `X: ${x}, Y: ${y}`;
 
             //send coords to backend, unknown if functioning
+            //need help figuring this part out
             fetch('http://127.0.0', {
                 method: 'POST',
                 headers: {
