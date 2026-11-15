@@ -26,8 +26,6 @@ export function Workspace() {
 
     const [showCharCount, setShowCharCount] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(true);
-    //const [isMediaFolderOpen, setIsMediaFolderOpen] = useState<boolean>(false);
-    const [isMediaFolderOpen, setIsMediaFolderOpen] = useState<boolean>(false);
 
     // each quick note has an id from the database as well as its saved text
     type QuickNote = {
@@ -62,27 +60,9 @@ export function Workspace() {
         fetchQuickNotes();
     }, []);
 
-    // create empty mediaItems folder as JavaScript array
-    // point to note: backend integration will populate this later on
-    type MediaItem = {
-        id: string;
-        media_type: 'image' | 'document';
-        filename: string;
-        content_type: string;
-        size_bytes: number;
-    };
-
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const [mediaLoading, setMediaLoading] = useState<boolean>(false);
     const [mediaError, setMediaError] = useState<string | null>(null);
-
-    //const handleMedia = () => {
-    //    setIsMediaFolderOpen(!isMediaFolderOpen);
-    //};
-
-    type Pin={
-
-    }
 
     useEffect(() => {
         const fetchMedia = async () => {
@@ -106,10 +86,6 @@ export function Workspace() {
         fetchMedia();
     }, []);
 
-    const handleMedia = () => {
-        setIsMediaFolderOpen(!isMediaFolderOpen);
-    };
-
     // creates a blank quick note and adds it to the array
     const addQuickNote = async () => {
         const response = await fetch('http://127.0.0.1:8000/quick-notes', {
@@ -117,8 +93,12 @@ export function Workspace() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: '' })
         });
+        if (!response.ok) {
+            console.log('Error: Unable to create Quick Note.');
+            return;
+        }
         const newNote: QuickNote = await response.json();
-        setQuickNotes([...quickNotes, newNote]);
+        setQuickNotes((previousNotes) => [...previousNotes, newNote]);
     };
 
     // updates note on the page as client types into the textarea
@@ -147,10 +127,16 @@ export function Workspace() {
 
     // deletes from both db and page the selected note
     const deleteQuickNote = async (id: number) => {
-        await fetch(`http://127.0.0.1:8000/quick-notes/${id}`, {
+        const response = await fetch(`http://127.0.0.1:8000/quick-notes/${id}`, {
             method: 'DELETE'
         });
-        setQuickNotes(quickNotes.filter((note) => note.id !== id));
+        if (response.ok) {
+            setQuickNotes((previousNotes) => 
+                previousNotes.filter((note) => note.id !== id)
+            );
+        } else {
+            console.log('Error: Failed to delete Quick Note.');
+        }
     };
 
     return (
@@ -217,7 +203,7 @@ export function Workspace() {
                 <WorkspaceNavbar />
             </div>
             
-            <aside className={isPinMenuOpen ? 'pin-menu pin-menu-open': 'pin menu'}>
+            <aside className={isPinMenuOpen ? 'pin-menu pin-menu-open': 'pin-menu'}>
                 <button
                     type="button"
                     className="pin-menu-toggle"
@@ -247,30 +233,11 @@ export function Workspace() {
                                     ))}
                                 </ul>
                             )}
-
-                            <h2>Note Editor</h2>
-                        {/* The text area updates noteText whenever the user types or deletes text. */}
-                        <textarea
-                            value={noteText}
-                            onChange={(event) => setNoteText(event.target.value)}
-                            placeholder="Write your note here..."
-                            rows={6}
-                            cols={45}
-                            aria-label="Note text"
-                        />
-
-                        {/* The character count is calculated from the current note text.
-                            Future developers can add a character limit or word counter here. */}
-                        {showCharCount && (
-                            <p>Characters: {noteText.length}</p>
-                        )}
-                    </div>
-                )}
-            </aside>
-        </div>
-            </section>
-            <WorkspaceNavbar />
-            {/* Note editor with a live character counter. */}
+                        </div>
+                    )}
+                </aside>
+            {/* Note Editor and Quick Notes go here. */}
+            {/* Note editor with a live character counter.*/}
             <section>
                 <h2>Note Editor</h2>
                 {/* The text area updates noteText whenever the user types or deletes text. */}
@@ -318,6 +285,6 @@ export function Workspace() {
                     ))
                 )}
             </section>
-        </>
+        </div>
     );
 }
