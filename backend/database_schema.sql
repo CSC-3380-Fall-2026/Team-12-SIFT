@@ -28,3 +28,11 @@ CREATE TABLE IF NOT EXISTS users(
     password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- quick notes table
+CREATE TABLE IF NOT EXISTS quick_notes(
+    id SERIAL PRIMARY KEY,
+    text TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

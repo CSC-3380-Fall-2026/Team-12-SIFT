@@ -12,6 +12,15 @@ from backend.app.annotations import (
 )
 from backend.app.media import save_media, get_media, get_all_media
 from backend.app.ocr import extract_text
+from backend.app.quick_notes import (
+    QuickNote,
+    QuickNoteCreate,
+    QuickNoteUpdate,
+    create_quick_note,
+    get_all_quick_notes,
+    update_quick_note,
+    delete_quick_note
+)
 from psycopg.errors import UniqueViolation
 from uuid import UUID
 
@@ -119,3 +128,26 @@ def register_user(user: UserCreate):
             status_code=409,
             detail="Username or email address already in use. Please try a different one."
         )
+
+# quick note endpoints
+@app.post("/quick-notes", response_model=QuickNote, status_code=201)
+def create_quick_note_endpoint(note: QuickNoteCreate):
+    return create_quick_note(note.text)
+
+@app.get("/quick-notes", response_model=list[QuickNote])
+def get_all_quick_notes_endpoint():
+    return get_all_quick_notes()
+
+@app.put("/quick-notes/{note_id}", response_model=QuickNote)
+def update_quick_note_endpoint(note_id: int, update: QuickNoteUpdate):
+    note = update_quick_note(note_id, update.text)
+    if note is None:
+        raise HTTPException(status_code=404, detail="Error: Quick Note not found.")
+    return note
+
+@app.delete("/quick-notes/{note_id}")
+def delete_quick_note_endpoint(note_id: int):
+    deleted = delete_quick_note(note_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Error: Quick Note not found.")
+    return {"message": "Confirmed: Quick Note deleted successfully."}
