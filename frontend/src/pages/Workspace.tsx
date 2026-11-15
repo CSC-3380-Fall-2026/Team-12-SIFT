@@ -27,6 +27,50 @@ export function Workspace() {
     const [showCharCount, setShowCharCount] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(true);
     //const [isMediaFolderOpen, setIsMediaFolderOpen] = useState<boolean>(false);
+    const [isMediaFolderOpen, setIsMediaFolderOpen] = useState<boolean>(false);
+
+    // each quick note has an id from the database as well as its saved text
+    type QuickNote = {
+        id: number;
+        text: string;
+    };
+
+    // create state variable storing an array of quick notes
+    const [quickNotes, setQuickNotes] = useState<QuickNote[]>([]);
+    const [quickNotesLoading, setQuickNotesLoading] = useState<boolean>(false);
+    const [quickNotesError, setQuickNotesError] = useState<string | null>(null);
+
+    // load saved quick notes when workspace first opens
+    useEffect(() => {
+        // collect all quick notes currently stored in the psql db
+        const fetchQuickNotes = async () => {
+            setQuickNotesLoading(true);
+            setQuickNotesError(null);
+            try {
+                const response = await fetch('http://127.0.0.1:8000/quick-notes');
+                if (!response.ok) {
+                    throw new Error('Error: Failed to fetch Quick Notes.');
+                }
+                const data: QuickNote[] = await response.json();
+                // update page w/ notes obtained from the backend
+                setQuickNotes(data);
+            } catch (error) {
+                setQuickNotesError('Error: Failed to load Quick Notes.');
+            }
+            setQuickNotesLoading(false);
+        };
+        fetchQuickNotes();
+    }, []);
+
+    // create empty mediaItems folder as JavaScript array
+    // point to note: backend integration will populate this later on
+    type MediaItem = {
+        id: string;
+        media_type: 'image' | 'document';
+        filename: string;
+        content_type: string;
+        size_bytes: number;
+    };
 
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const [mediaLoading, setMediaLoading] = useState<boolean>(false);
@@ -61,6 +105,53 @@ export function Workspace() {
         };
         fetchMedia();
     }, []);
+
+    const handleMedia = () => {
+        setIsMediaFolderOpen(!isMediaFolderOpen);
+    };
+
+    // creates a blank quick note and adds it to the array
+    const addQuickNote = async () => {
+        const response = await fetch('http://127.0.0.1:8000/quick-notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: '' })
+        });
+        const newNote: QuickNote = await response.json();
+        setQuickNotes([...quickNotes, newNote]);
+    };
+
+    // updates note on the page as client types into the textarea
+    const updateQuickNote = (id: number, newText: string) => {
+        setQuickNotes((previousNotes) =>
+            previousNotes.map((note) => {
+                if (note.id === id) {
+                    return { ...note, text: newText };
+                }
+                return note;
+            })
+        );
+    };
+
+    // saves the edited note to db after user leaves textarea
+    const saveQuickNote = async (id: number, text: string) => {
+        const response = await fetch(`http://127.0.0.1:8000/quick-notes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        if (!response.ok) {
+            console.log('Error: Failed to save Quick Note.');
+        }
+    };
+
+    // deletes from both db and page the selected note
+    const deleteQuickNote = async (id: number) => {
+        await fetch(`http://127.0.0.1:8000/quick-notes/${id}`, {
+            method: 'DELETE'
+        });
+        setQuickNotes(quickNotes.filter((note) => note.id !== id));
+    };
 
     return (
         <div className="workspace">
@@ -177,5 +268,56 @@ export function Workspace() {
                 )}
             </aside>
         </div>
+            </section>
+            <WorkspaceNavbar />
+            {/* Note editor with a live character counter. */}
+            <section>
+                <h2>Note Editor</h2>
+                {/* The text area updates noteText whenever the user types or deletes text. */}
+                <textarea
+                    value={noteText}
+                    onChange={(event) => setNoteText(event.target.value)}
+                    placeholder="Write your note here..."
+                    rows={6}
+                    cols={45}
+                    aria-label="Note text"
+                />
+
+                {/* The character count is calculated from the current note text.
+                    Future developers can add a character limit or word counter here. */}
+                {showCharCount && (
+                    <p>Characters: {noteText.length}</p>
+                )}
+            </section>
+            {/* Quick Notes panel goes here. */}
+            <section>
+                <h2>Quick Notes</h2>
+                <button onClick={addQuickNote}>Add Note</button>
+                {/* displays message while saved notes are loading */}
+                {quickNotesLoading && (
+                    <p>Loading Quick Notes...</p>
+                )}
+                {quickNotesError && (
+                    <p>{quickNotesError}</p>
+                )}
+                {!quickNotesLoading && !quickNotesError && quickNotes.length === 0 && (
+                    <p>No Quick Notes have been made yet.</p>
+                )}
+                {!quickNotesLoading && !quickNotesError && quickNotes.length > 0 && (
+                    quickNotes.map((note) => (
+                        <div key={note.id}>
+                            <textarea
+                                value={note.text}
+                                onChange={(event) => updateQuickNote(note.id, event.target.value)}
+                                onBlur={(event) => saveQuickNote(note.id, event.target.value)}
+                                rows={3}
+                                placeholder="Write your Quick Note here..."
+                            />
+                            <button type="button" onClick={() => deleteQuickNote(note.id)}>Delete</button>
+                        </div>
+                    ))
+                )}
+            </section>
+        </>
     );
 }
