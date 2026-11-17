@@ -1,5 +1,11 @@
 {
+  "scripts": {
+    "dev": "concurrently \" npm run dev --prefix frontend\" \"uvicorn backend.app.main:app --reload\""
+  },
   "dependencies": {
     "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

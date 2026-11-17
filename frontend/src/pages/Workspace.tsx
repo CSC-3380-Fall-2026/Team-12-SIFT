@@ -1,107 +1,245 @@
-import { useState } from 'react';
-import {
-    Upload, Type, Pencil, Hand, MousePointer2
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
+import profileIcon from '../assets/profile-icon.png';
 import './Workspace.css';
+
+// create empty mediaItems folder as JavaScript array
+// point to note: backend integration will populate this later on
+type MediaItem = {
+    id: string;
+    media_type: 'image' | 'document';
+    filename: string;
+    content_type: string;
+    size_bytes: number;
+};
 
 export function Workspace() {
     // Stores the text entered by the user in the note editor.
     // React updates the screen whenever this value changes.
     const [noteText, setNoteText] = useState<string>('');
+    //different menu bools
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+    const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+    const [isPinMenuOpen, setIsPinMenuOpen] = useState<boolean>(false);
+    //darkmode bool
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
     const [showCharCount, setShowCharCount] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(true);
 
-    //const mediaItems: string[] = ['photo.jpg', 'video.mp4', 'document.png']
+    // each quick note has an id from the database as well as its saved text
+    type QuickNote = {
+        id: number;
+        text: string;
+    };
 
-    const handleMedia = () => {
-        // Handle media logic here
-        console.log('Media button clicked');
+    // create state variable storing an array of quick notes
+    const [quickNotes, setQuickNotes] = useState<QuickNote[]>([]);
+    const [quickNotesLoading, setQuickNotesLoading] = useState<boolean>(false);
+    const [quickNotesError, setQuickNotesError] = useState<string | null>(null);
+
+    // load saved quick notes when workspace first opens
+    useEffect(() => {
+        // collect all quick notes currently stored in the psql db
+        const fetchQuickNotes = async () => {
+            setQuickNotesLoading(true);
+            setQuickNotesError(null);
+            try {
+                const response = await fetch('http://127.0.0.1:8000/quick-notes');
+                if (!response.ok) {
+                    throw new Error('Error: Failed to fetch Quick Notes.');
+                }
+                const data: QuickNote[] = await response.json();
+                // update page w/ notes obtained from the backend
+                setQuickNotes(data);
+            } catch (error) {
+                setQuickNotesError('Error: Failed to load Quick Notes.');
+            }
+            setQuickNotesLoading(false);
+        };
+        fetchQuickNotes();
+    }, []);
+
+    const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+    const [mediaLoading, setMediaLoading] = useState<boolean>(false);
+    const [mediaError, setMediaError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchMedia = async () => {
+            setMediaLoading(true);
+            setMediaError(null);
+            try {
+                const response = await fetch('http://127.0.0.1:8000/media');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch media files.');
+                }
+                const data: MediaItem[] = await response.json();
+                setMediaItems(data);
+            } catch (error) {
+                setMediaError(
+                    error instanceof Error ? error.message : 'Something went wrong.'
+                );
+            } finally {
+                setMediaLoading(false);
+            }
+        };
+        fetchMedia();
+    }, []);
+
+    // creates a blank quick note and adds it to the array
+    const addQuickNote = async () => {
+        const response = await fetch('http://127.0.0.1:8000/quick-notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: '' })
+        });
+        if (!response.ok) {
+            console.log('Error: Unable to create Quick Note.');
+            return;
+        }
+        const newNote: QuickNote = await response.json();
+        setQuickNotes((previousNotes) => [...previousNotes, newNote]);
+    };
+
+    // updates note on the page as client types into the textarea
+    const updateQuickNote = (id: number, newText: string) => {
+        setQuickNotes((previousNotes) =>
+            previousNotes.map((note) => {
+                if (note.id === id) {
+                    return { ...note, text: newText };
+                }
+                return note;
+            })
+        );
+    };
+
+    // saves the edited note to db after user leaves textarea
+    const saveQuickNote = async (id: number, text: string) => {
+        const response = await fetch(`http://127.0.0.1:8000/quick-notes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        if (!response.ok) {
+            console.log('Error: Failed to save Quick Note.');
+        }
+    };
+
+    // deletes from both db and page the selected note
+    const deleteQuickNote = async (id: number) => {
+        const response = await fetch(`http://127.0.0.1:8000/quick-notes/${id}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            setQuickNotes((previousNotes) => 
+                previousNotes.filter((note) => note.id !== id)
+            );
+        } else {
+            console.log('Error: Failed to delete Quick Note.');
+        }
     };
 
     return (
-        <>
-            <h1>This is a workspace!</h1>
-            <section className="settings-container">
-                <button
-                className="settings-button"
-                type="button"
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                aria-expanded={isSettingsOpen}
-                >
-                    Settings
-                </button>
-                {isSettingsOpen && (
-                <div className="settings-dropdown">
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={isDarkMode}
-                            onChange={(event) => setIsDarkMode(event.target.checked)}
+        <div className="workspace">
+            <div className="board">
+                <section className="profile-container">
+                    <button
+                        type="button"
+                        className="profile-button"
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        aria-label="Profile"
+                        aria-expanded={isProfileOpen}
+                    >
+                        <img
+                            src={profileIcon}
+                            alt=""
+                            className="profile-icon"
                         />
-                        Dark Mode
-                    </label>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={showCharCount}
-                            onChange={(event) => setShowCharCount(event.target.checked)}
-                        />
-                        Show Character Count
-                    </label>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={autoSave}
-                            onChange={(event) => setAutoSave(event.target.checked)}
-                        />
-                        Enable Auto-Save
-                    </label>
-                </div>
-            )}
-            </section>
-            <section>
+                    </button>
+
+                    {isProfileOpen && (
+                        <div className="settings-dropdown profile-dropdown">
+                            <button
+                                type="button"
+                                className="profile-menu-option"
+                                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                                aria-expanded={isSettingsOpen}
+                            >
+                                 Settings {isSettingsOpen ? '▾' : '▸'}
+                            </button>
+
+                            {isSettingsOpen && (
+                                <>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={isDarkMode}
+                                            onChange={(event) => setIsDarkMode(event.target.checked)}
+                                        />
+                                        Dark Mode
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={showCharCount}
+                                            onChange={(event) => setShowCharCount(event.target.checked)}
+                                        />
+                                        Show Character Count
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={autoSave}
+                                            onChange={(event) => setAutoSave(event.target.checked)}
+                                        />
+                                        Enable Auto-Save
+                                    </label>
+                                </>
+                            )}
+                        </div>                  
+                    )}
+                </section>
+
+                <WorkspaceNavbar />
+            </div>
+            
+            <aside className={isPinMenuOpen ? 'pin-menu pin-menu-open': 'pin-menu'}>
                 <button
                     type="button"
-                    className="media-button"
-                    onClick={handleMedia}
+                    className="pin-menu-toggle"
+                    onClick={() => setIsPinMenuOpen(!isPinMenuOpen)}
+                    aria-label={isPinMenuOpen ? 'Close menu' : 'Open Menu'}
+                    aria-expanded={isPinMenuOpen}
                 >
-                    Open Media Folder
+                    {isPinMenuOpen? '->' : '<-'}
                 </button>
 
-                {/* Existing media folder code is preserved for future development. */}
-                {/* 
-                <h2>Media Folder</h2>
-                <p>Stored media: {mediaItems.length}</p>
-                <ul>
-                    {mediaItems.map((media) => (
-                        <li key={media}>{media}</li>
-                    ))}
-                </ul>
-                */}
-            </section>
-            <section className="editing-toolbar" aria-label="Editing tools">
-                <button type="button" aria-label="Upload media" title="Upload media">
-                    <Upload size={24} />
-                </button>
-                <button type="button" aria-label="Edit text" title="Edit text">
-                    <Type size={24} />
-                </button>
-                <button type="button" aria-label="Draw" title="Draw">
-                    <Pencil size={24} />
-                </button>
-                <button type="button" aria-label="Move" title="Move">
-                    <Hand size={24} />
-                </button>
-                <button type="button" aria-label="Select" title="Select">
-                    <MousePointer2 size={24} />
-                </button>
-            </section>
-            {/* Note editor with a live character counter. */}
+                {isPinMenuOpen &&(
+                    <div className="pin-menu-content">
+                        <h2>Media Folder</h2>
+                            {mediaLoading ? (<p>Loading media...</p>) : mediaError ? 
+                                (<p>{mediaError}</p>) : mediaItems.length === 0 ? 
+                                (<p>The media folder is currently empty.</p>) : 
+                                (
+                                <ul>
+                                    {mediaItems.map((item) => (
+                                        <li key={item.id}>
+                                            <strong>{item.filename}</strong>
+                                            {' -- '}
+                                            {item.media_type}
+                                            {' -- '}
+                                            {(item.size_bytes / 1024).toFixed(1)} KB
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                </aside>
+            {/* Note Editor and Quick Notes go here. */}
+            {/* Note editor with a live character counter.*/}
             <section>
                 <h2>Note Editor</h2>
-
                 {/* The text area updates noteText whenever the user types or deletes text. */}
                 <textarea
                     value={noteText}
@@ -118,6 +256,35 @@ export function Workspace() {
                     <p>Characters: {noteText.length}</p>
                 )}
             </section>
-        </>
+            {/* Quick Notes panel goes here. */}
+            <section>
+                <h2>Quick Notes</h2>
+                <button onClick={addQuickNote}>Add Note</button>
+                {/* displays message while saved notes are loading */}
+                {quickNotesLoading && (
+                    <p>Loading Quick Notes...</p>
+                )}
+                {quickNotesError && (
+                    <p>{quickNotesError}</p>
+                )}
+                {!quickNotesLoading && !quickNotesError && quickNotes.length === 0 && (
+                    <p>No Quick Notes have been made yet.</p>
+                )}
+                {!quickNotesLoading && !quickNotesError && quickNotes.length > 0 && (
+                    quickNotes.map((note) => (
+                        <div key={note.id}>
+                            <textarea
+                                value={note.text}
+                                onChange={(event) => updateQuickNote(note.id, event.target.value)}
+                                onBlur={(event) => saveQuickNote(note.id, event.target.value)}
+                                rows={3}
+                                placeholder="Write your Quick Note here..."
+                            />
+                            <button type="button" onClick={() => deleteQuickNote(note.id)}>Delete</button>
+                        </div>
+                    ))
+                )}
+            </section>
+        </div>
     );
 }

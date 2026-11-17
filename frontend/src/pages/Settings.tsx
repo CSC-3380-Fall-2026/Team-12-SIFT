@@ -1,5 +1,4 @@
 import './Settings.css'
-import cork from '../assets/6443928-large-corkboard-texture-or-background.jpg';
 import { Link } from 'react-router-dom';
 
 export const Settings = () => {

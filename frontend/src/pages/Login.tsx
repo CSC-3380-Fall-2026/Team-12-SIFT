@@ -1,5 +1,4 @@
 import './Login.css'
-import cork from '../assets/6443928-large-corkboard-texture-or-background.jpg';
 import { Link } from 'react-router-dom';
 
 export const Login = () => {
@@ -8,41 +7,32 @@ export const Login = () => {
         // Handle login logic here
         console.log('Login button clicked');
     };
-    return (
-        
+
+    return ( 
         <div className="login-container"> 
-            <div className="header">
-                <div className="text">Sign In</div>
-                <div className="underline"></div>
+            <div className="login-header">Sign In</div>
+
+            <div className="login-window">
+                <div className="login-fields">
+                    <label htmlFor="username">Username or Email</label>
+                    <input id="email" type="email" placeholder="Username or Email Address" />
+                </div>
+
+                <div className="login-fields">
+                    <label htmlFor="password">Password</label>
+                    <input id="password" type="password" placeholder="Password" />
+                </div>
+            
+                <button type="button" className="login-button" onClick={handleLogin}>
+                    Login
+                </button>
             </div>
-        <div className="inputs">
-        <div className="email-input">
-            <input type="text" placeholder="Username or Email Address" />
+
+                <div className="register-link">
+                    <span>Don't Have an Account?</span>
+                    <Link to="/register" className="register-button">Register</Link>
+                </div>
         </div>
-        <div className="password-input">
-            <input type="password" placeholder="Password" />
-        </div>
-
-            </div>
-            <button type="button"
-                className="login-button"
-                onClick={handleLogin}
-            >
-                Login
-            </button>
-
-
-        <div>
-            <Link to="/register">Don't have an account? Sign Up</Link>
-        </div>
-        </div>
-
-
-        
-
-        
-      
-      
     );
 
 
