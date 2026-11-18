@@ -36,6 +36,91 @@
 
 /* menu pin*/
 
+.pin-management{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.pin-management h2{
+    margin-bottom: 4px;
+}
+
+.pin-selection-info{
+    fontsize: 12px;
+    margin: 0;
+}
+
+.pin-selected{
+    outline: 3px solid #2181d6;
+    outline-offset: 2px;
+}
+
+
+.pin-menu-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.pin-menu{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 350px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 24px;
+    color: #17192c;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px #041d3342;
+    background-color: #ffffff;
+}
+
+.pin-menu h2,
+.pin-menu h3{
+    margin: 0;
+}
+
+.pin-menu textarea,
+.pin-menu select{
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #17192c;
+    border-radius: 5px;
+    font: inherit;
+}
+
+
+
+.pin-menu textarea{
+    resize: vertical;
+}
+
+.pin-menu-buttons button{
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #2181d6;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.pin-menu-buttons .cancel-button{
+    background-color: #2181d6;
+}
+
+
 .add-pin{
     display: flex;
     flex-direction: column;
@@ -64,6 +149,11 @@
     border-radius: 5px;
     font-weight: 700;
     cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+.add-pin-button.active{
+    background: #134c7e;
 }
 
 .workspace{
@@ -91,7 +181,7 @@
     z-index: -1;
 }
 
-.pin-menu{
+.side-menu{
     display: flex;
     flex-direction: column;
     width: 40px;
@@ -104,13 +194,13 @@
     transition: width 0.3s ease;
 }
 
-.pin-menu-open{
+.side-menu-open{
     width: 220px;
     padding: 12px 8px;
     background-color: #2181d6;
 }
 
-.pin-menu-toggle{
+.side-menu-toggle{
     align-self: flex-start;
     background: none;
     border: none;
@@ -120,7 +210,7 @@
     cursor: pointer;
 }
 
-.pin-menu-content{
+.side-menu-content{
     flex: 1;
     overflow-y: auto;
     white-space: normal;

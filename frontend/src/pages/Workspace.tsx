@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef} from 'react';
-import type { 
-    DragEvent as ReactDragEvent,
-    PointerEvent as ReactPointerEvent,
-} from 'react';
+import type { DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent} from 'react';
 import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
 import profileIcon from '../assets/profile-icon.png';
 import './Workspace.css';
@@ -48,7 +45,7 @@ export function Workspace() {
     //different menu bools
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
     const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
-    const [isPinMenuOpen, setIsPinMenuOpen] = useState<boolean>(false);
+    const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
     //darkmode bool
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
@@ -72,6 +69,13 @@ export function Workspace() {
     const [newPinNote, setNewPinNote] = useState<string>('');
 
     const canAddPin = newPinType == 'note' ? newPinNote.trim() !== '' : newPinMediaId !== '';
+    const [isAddPinOpen, setIsAddPinOpen] = useState(false);
+
+    const[selectedPinId, setSelectedPinId] = useState<string | null>(null);
+    const[pinActionMode, setPinActionMode] = useState<'edit' | 'delete' | null>(null);
+
+    const [isEditingPin, setIsEditingPin] = useState(false);
+
 
     // each quick note has an id from the database as well as its saved text
     type QuickNote = {
@@ -185,6 +189,7 @@ export function Workspace() {
         }
     };
 
+    //shows the tiny previews of the pin within the tray
     const renderPinContent = (pin: Pin) => {
         if (pin.item_type === 'note') {
             return <p className="pin-note">{pin.note_content}</p>;
@@ -205,6 +210,26 @@ export function Workspace() {
             );
     };
 
+    //open and close pin menu
+    const openAddPin = () => {
+        setIsEditingPin(false);
+        setSelectedPinId(null);
+
+        setNewPinType('note');
+        setNewPinNote('');
+        setNewPinMediaId('');
+
+        setIsAddPinOpen(true);
+    };
+
+    const closePinMenu = () => {
+        setIsAddPinOpen(false);
+        setIsEditingPin(false);
+
+        setNewPinNote('');
+        setNewPinMediaId('');
+    };
+
     //builds and adds pin with a temp id
     const handleAddPin = () => {
         const newPin: Pin = {
@@ -218,10 +243,93 @@ export function Workspace() {
         };
 
         setPins((previousPins) => [...previousPins, newPin]);
-        setNewPinNote('');
-        setNewPinMediaId('');
+        
+        closePinMenu();
     };
 
+    //loads the pin you want to edit into the window
+    const handleEditPin = () => {
+        const pin = pins.find(
+            (item) => item.id === selectedPinId
+        );
+
+        if(!pin) return;
+
+        setNewPinType(pin.item_type);
+        setNewPinNote(pin.note_content ?? '');
+        setNewPinMediaId(pin.media_id ?? '');
+
+        setIsEditingPin(true);
+        setIsAddPinOpen(true);
+    };
+
+    const handleSavePin = () => {
+        if (!selectedPinId || !canAddPin) return;
+
+        setPins((previousPins) =>
+            previousPins.map((pin) =>
+                pin.id === selectedPinId
+                ? {...pin,
+                    item_type: newPinType,
+                    note_content: newPinType === 'note' ? newPinNote : null,
+                    media_id: newPinType === 'media' ? newPinMediaId : null,
+                }
+                :pin
+            )
+        );
+        closePinMenu();
+        setSelectedPinId(null);
+    };
+
+    //deletes a pin
+    const handleDeletePin = () => {
+        if(!selectedPinId) return;}
+//fix
+
+    //determines whether to edit or delete after clicking and the logic that follows each
+    const handlePinClick = (pinId: string) => {
+        const pin = pins.find((item) => item.id === pinId)
+
+        //nothing equals null
+        if(!pin) return;
+
+        //edit
+        if(pinActionMode === 'edit'){
+            setSelectedPinId(pinId);
+
+            setNewPinType(pin.item_type);
+            setNewPinNote(pin.note_content ?? '');
+            setNewPinMediaId(pin.media_id ?? '');
+
+            setIsEditingPin(true);
+            setIsAddPinOpen(true);
+
+            setPinActionMode(null);
+            return;
+        }
+
+        //delete
+        if(pinActionMode === 'delete'){
+            const confirmed = window.confirm('Are you sure?');
+
+            if(confirmed){
+                setPins((previousPins) =>
+                    previousPins.filter(
+                        (item) => item.id !== pinId
+                    )
+                );
+            }
+
+            setSelectedPinId(null);
+            setPinActionMode(null);
+            return;
+        }
+
+        //default
+        setSelectedPinId(pinId);
+    };
+
+    //checks if the cursor is over the menu for pin movement
     const isPointOverMenu = (clientX: number, clientY: number) => {
         const menuBox = menuRef.current?.getBoundingClientRect();
         if(!menuBox) return false;
@@ -291,22 +399,25 @@ export function Workspace() {
         setIsOverMenu(false);
     };
 
+    //cancel logic
     const handlePointerCancel = () => {
         setDragging(null);
         setIsOverMenu(false);
     };
 
     //pin tile is dragged pt1
+    //pin tile refers to pins within the tray
     const handleTileDragStart=(event: ReactDragEvent<HTMLDivElement>, pinId: string) => {
         event.dataTransfer.setData('text/plain', pinId);
         event.dataTransfer.effectAllowed = 'move';
     };
 
+    //handles when pin is dragged to board so it knows how to place accordingly
     const handleBoardDragOver = (event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
     }
 
-    //places pin where dropped
+    //places pin where dropped (when let go of mouse)
     const handleBoardDrop = (event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
 
@@ -333,7 +444,55 @@ export function Workspace() {
                 onDragOver={handleBoardDragOver}
                 onDrop={handleBoardDrop}
             >
-                <section className="profile-container">
+                {/*pin logic for on the board*/}
+                {boardPins.map((pin) => {
+                    const mediaItem = 
+                        pin.item_type == 'media'
+                            ? mediaItems.find((item) => item.id === pin.media_id)
+                            : undefined;
+                    
+                    return(
+                        <div
+                            key={pin.id}
+                            className={`pin ${dragging?.id === pin.id ? 'pin dragging' : ''}
+                                ${selectedPinId === pin.id ? 'selected' : ''}
+                            }`}
+                            style={{left: pin.x, top:pin.y}}
+                            onClick={() => handlePinClick(pin.id)}
+                            onPointerDown={(event) => handlePointerDown(event, pin.id)}
+                            onPointerMove={(event) => handlePointerMove(event, pin.id)}
+                            onPointerUp={(event) => handlePointerUp(event, pin.id)}
+                            //onPointerCancel={handlePointerCancel}
+                        >
+                            {renderPinContent(pin)}
+                        </div>
+                )
+            })}
+                {/*navbar obv*/}
+                <WorkspaceNavbar />
+            </div>
+            
+            {/*sliding menu*/}
+            <aside 
+                ref={menuRef}
+                className={`side-menu${isSideMenuOpen ? ' side-menu-open' : ''}${isOverMenu ? ' side-menu-drop' : ''}`}
+            >
+                {/*sliding menu toggle*/}
+                <button
+                    type="button"
+                    className="side-menu-toggle"
+                    onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
+                    aria-label={isSideMenuOpen ? 'Close menu' : 'Open Menu'}
+                    aria-expanded={isSideMenuOpen}
+                >
+                    {isSideMenuOpen? '->' : '<-'}
+                </button>
+
+                {/*content in the sliding menu*/}
+                {isSideMenuOpen &&(
+                    <div className="side-menu-content">
+                        <section className="profile-container">
+                    {/*profile and settings*/}
                     <button
                         type="button"
                         className="profile-button"
@@ -389,101 +548,62 @@ export function Workspace() {
                             )}
                         </div>                  
                     )}
+
                 </section>
-                {/*pin*/}
-                {boardPins.map((pin) => {
-                    const mediaItem = 
-                        pin.item_type == 'media'
-                            ? mediaItems.find((item) => item.id === pin.media_id)
-                            : undefined;
-                    
-                    return(
-                        <div
-                            key={pin.id}
-                            className={dragging?.id === pin.id ? 'pin dragging' : 'pin'}
-                            style={{left: pin.x, top:pin.y}}
-                            onPointerDown={(event) => handlePointerDown(event, pin.id)}
-                            onPointerMove={(event) => handlePointerMove(event, pin.id)}
-                            onPointerUp={(event) => handlePointerUp(event, pin.id)}
-                            //onPointerCancel={handlePointerCancel}
-                        >
-                            {renderPinContent(pin)}
-                        </div>
-                )
-})}
-                <WorkspaceNavbar />
-            </div>
-            
-            <aside 
-                ref={menuRef}
-                className={`pin-menu${isPinMenuOpen ? ' pin-menu-open' : ''}${isOverMenu ? ' pin-menu-drop' : ''}`}
-            >
-                <button
-                    type="button"
-                    className="pin-menu-toggle"
-                    onClick={() => setIsPinMenuOpen(!isPinMenuOpen)}
-                    aria-label={isPinMenuOpen ? 'Close menu' : 'Open Menu'}
-                    aria-expanded={isPinMenuOpen}
-                >
-                    {isPinMenuOpen? '->' : '<-'}
-                </button>
 
-                {isPinMenuOpen &&(
-                    <div className="pin-menu-content">
+                        {/*pin management, add edit delete*/}
+                        <section className="pin-management">
+                            <h2>Manage Pin</h2>
 
-                        <section className="add-pin">
-                            <h2>Add Pin</h2>
-
-                            <div className="add-pin-type">
-                                <label>
-                                    <input
-                                        type="radio"
-                                        name="pin-type"
-                                        checked={newPinType === 'note'}
-                                        onChange={() => setNewPinType('note')}
-                                    />
-                                    Note
-                                </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        name="pin-type"
-                                        checked={newPinType === 'media'}
-                                        onChange={() => setNewPinType('media')}
-                                    />
-                                    Media
-                                </label>
-                            </div>
-
-                            {newPinType === 'note' ? (
-                                <textarea
-                                    value={newPinNote}
-                                    onChange={(event) => setNewPinNote(event.target.value)}
-                                    placeholder="Write Pin Note..."
-                                    rows={3}
-                                    aria-label="New Pin Note"
-                                />
-                            ) : (
-                                <select
-                                    value={newPinMediaId}
-                                    onChange={(event) => setNewPinMediaId(event.target.value)}
-                                    aria-label="Media for pin"
-                                >
-                                    <option value="">Choose a file...</option>
-                                    {mediaItems.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {item.filename}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-
-                            <button type="button" onClick={handleAddPin}>
-                                Add Pin
+                            {/*add*/}
+                            <button
+                                type="button"
+                                className="add-pin-button"
+                                onClick={openAddPin}
+                            >
+                                + Add Pin
                             </button>
+
+                            {/*edit with logic to press button then choose pin to edit*/}
+                            <button
+                                type="button"
+                                className={`add-pin-button ${ 
+                                    pinActionMode === 'edit' ? 'active' : ''
+                                }`}
+                                onClick={() =>
+                                    setPinActionMode(
+                                        pinActionMode === 'edit' ? null : 'edit'
+                                    )
+                                }
+                            >
+                                Edit Pin
+                            </button>
+
+                            {/*delete with logic same as edit*/}
+                            <button
+                                type="button"
+                                className={`add-pin-button ${ 
+                                    pinActionMode === 'delete' ? 'active' : ''
+                                }`}
+                                onClick={() =>
+                                    setPinActionMode(
+                                        pinActionMode === 'delete' ? null : 'delete'
+                                    )
+                                }
+                            >
+                                Delete Pin
+                            </button>
+
+                            {/*I THINK THIS IS WHERE TO HILIGHT*/}
+                            {selectedPinId && (
+                                <p className="pin-selection-info">
+                                    Pin Selected
+                                </p>
+                            )}
                         </section>
 
-                        <h2>Pin Menu Tray</h2>
+                        {/*tray for unused pins*/}
+                        <h2>Available Pins</h2>
                         {menuPins.length === 0 ? (
                             <p>No Pins Found, add some above!</p>
                         ) : (
@@ -491,8 +611,11 @@ export function Workspace() {
                                 {menuPins.map((pin) => (
                                     <div 
                                     key={pin.id} 
-                                    className="tray-tile"
+                                    className={`tray-tile ${
+                                        selectedPinId === pin.id ? 'selected' : ''
+                                    }`}
                                     draggable
+                                    onClick={() => handlePinClick(pin.id)}
                                     onDragStart={(event) => handleTileDragStart(event, pin.id)}
                                     >
                                         {renderPinContent(pin)}
@@ -551,7 +674,94 @@ export function Workspace() {
                     </div>
                 )}
             </aside>
-        </div>
+            {/*add pin window*/}
+            {isAddPinOpen && (
+                <div className="pin-menu-overlay">
+                    <div className="pin-menu">
+                        <h2>
+                            {isEditingPin ? 'Edit Pin' : 'Add Pin'}
+                        </h2>
+
+                        <div className="add-pin-type">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="pin-type"
+                                    checked={newPinType === 'note'}
+                                    onChange={() => setNewPinType('note')}
+                                />
+                                Note
+                            </label>
+
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="pin-type"
+                                    checked={newPinType === 'media'}
+                                    onChange={() => setNewPinType('media')}
+                                />
+                                Media
+                            </label>
+                        </div>
+
+                        {newPinType === 'note' ? (
+                            <textarea
+                                value={newPinNote}
+                                onChange={(event) =>
+                                    setNewPinNote(event.target.value)
+                                }
+                                placeholder="write pin note"
+                                rows={4}
+                                aria-label="Pin Note"
+                            />
+                        ):(
+                            <select
+                                value={newPinMediaId}
+                                onChange={(event) =>
+                                    setNewPinMediaId(event.target.value)
+                                }
+                                aria-label="Media Pin"
+                            >
+                                <option value="">
+                                    Choose a file
+                                </option>
+
+                                {mediaItems.map((item) =>
+                                    <option
+                                        key={item.id}
+                                        value={item.id}
+                                    >
+                                        {item.filename}
+                                    </option>
+                                )}
+                            </select>
+                        )}
+
+                        {/*look into pin sizing*/}
+
+                        {/*save and cancel buttons within add/edit windows*/}
+                        <div className="pin-menu-buttons">
+                            <button
+                                type="button"
+                                onClick={
+                                    isEditingPin ? handleSavePin : handleAddPin
+                                }
+                                disabled={!canAddPin}
+                            >
+                                {isEditingPin ? 'Save Cahnges' : 'Add Pin'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="cancel-button"
+                                onClick={closePinMenu}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            </div>
     );
 }
-    
