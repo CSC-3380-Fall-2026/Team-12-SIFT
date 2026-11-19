@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import profileIcon from '../assets/profile-icon.png'
+import './Home.css'
+import siftLogo from '../assets/sift_logo.png'
 // heroImg from './src/assets/hero.png'
 //import reactLogo from './src/assets/react.svg'
 //import viteLogo from './src/assets/vite.svg'
@@ -12,6 +14,17 @@ export function Home() {
 
   return (
     <>
+    <div className="Signed-In-Home">
+
+    <div className="The-Logo">
+      <img src={siftLogo} alt="Sift Logo" className="sift-logo" />
+    </div>
+    <div className="The-Top-Box">
+      {/* There must be text here for it show up, and this should be altered-
+      -later for it to welcome the user by login name, but it's a temporary-
+      -message for now. */}
+          <h1> Welcome, USER</h1>
+        </div>
       <section className="home-profile-container">
         <button
           type="button"
@@ -36,11 +49,8 @@ export function Home() {
       </section>
 
       <section id="center">
-       {/*  <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div> */}
+
+        
         <div>
           <h1>This is a homepage! Test Test!</h1>
           <Link to="/workspace">Go to Workspace</Link>
@@ -53,7 +63,8 @@ export function Home() {
       <div className="ticks"></div>
 
       <div className="ticks"></div>
-      <section id="spacer"></section>
+      <section id="spacer"></section>  
+    </div>
     </>
   )
 }
