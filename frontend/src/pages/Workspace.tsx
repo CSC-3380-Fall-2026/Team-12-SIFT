@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef} from 'react';
-import type { DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent} from 'react';
+import type { DragEvent as ReactDragEvent} from 'react';
 import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
 import profileIcon from '../assets/profile-icon.png';
 import './Workspace.css';
@@ -22,13 +22,6 @@ type Pin = {
     media_id: string | null;
     note_content: string | null;
     placed: boolean;
-};
-
-//draggin pin info
-type DragState = {
-    id: string;
-    offsetX: number;
-    offsetY: number;
 };
 
 //keeps a min/max for the board
@@ -54,10 +47,7 @@ export function Workspace() {
 
     //pins on the board vs menu, dragging process, board handle
     const [pins, setPins] = useState<Pin[]> ([]);
-    const [dragging, setDragging] = useState<DragState | null>(null);
     const boardRef = useRef<HTMLDivElement>(null);
-    const menuRef = useRef<HTMLElement>(null);
-    const [isOverMenu, setIsOverMenu] = useState<boolean>(false);
 
     const boardPins = pins.filter((pin) => pin.placed);
     const menuPins = pins.filter((pin) => !pin.placed);
@@ -68,7 +58,7 @@ export function Workspace() {
     const [newPinMediaId, setNewPinMediaId] = useState<string>('');
     const [newPinNote, setNewPinNote] = useState<string>('');
 
-    const canAddPin = newPinType == 'note' ? newPinNote.trim() !== '' : newPinMediaId !== '';
+    const canAddPin = newPinType === 'note' ? newPinNote.trim() !== '' : newPinMediaId !== '';
     const [isAddPinOpen, setIsAddPinOpen] = useState(false);
 
     const[selectedPinId, setSelectedPinId] = useState<string | null>(null);
@@ -111,30 +101,6 @@ export function Workspace() {
     }, []);
 
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-    const [mediaLoading, setMediaLoading] = useState<boolean>(false);
-    const [mediaError, setMediaError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchMedia = async () => {
-            setMediaLoading(true);
-            setMediaError(null);
-            try {
-                const response = await fetch('http://127.0.0.1:8000/media');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch media files.');
-                }
-                const data: MediaItem[] = await response.json();
-                setMediaItems(data);
-            } catch (error) {
-                setMediaError(
-                    error instanceof Error ? error.message : 'Something went wrong.'
-                );
-            } finally {
-                setMediaLoading(false);
-            }
-        };
-        fetchMedia();
-    }, []);
 
     // creates a blank quick note and adds it to the array
     const addQuickNote = async () => {
@@ -195,19 +161,19 @@ export function Workspace() {
             return <p className="pin-note">{pin.note_content}</p>;
         }
 
-            const mediaItem = mediaItems.find((item) => item.id === pin.media_id);
-            return(
-                <div className="pin-media">
-                    {mediaItem ? (
-                        <>
-                            <strong>{mediaItem.filename}</strong>
-                            <div>{mediaItem.media_type}</div>
-                        </>
-                    ) : (
-                        <div>Media not found</div>
-                    )}
-                </div>
-            );
+        const mediaItem = mediaItems.find((item) => item.id === pin.media_id);
+        return(
+            <div className="pin-media">
+                {mediaItem ? (
+                    <>
+                        <strong>{mediaItem.filename}</strong>
+                        <div>{mediaItem.media_type}</div>
+                    </>
+                ) : (
+                    <div>Media not found</div>
+                )}
+            </div>
+        );
     };
 
     //open and close pin menu
@@ -248,10 +214,8 @@ export function Workspace() {
     };
 
     //loads the pin you want to edit into the window
-    const handleEditPin = () => {
-        const pin = pins.find(
-            (item) => item.id === selectedPinId
-        );
+    const handleEditPin = (pinId: string) => {
+        const pin = pins.find((item) => item.id === pinId);
 
         if(!pin) return;
 
@@ -261,6 +225,7 @@ export function Workspace() {
 
         setIsEditingPin(true);
         setIsAddPinOpen(true);
+        setSelectedPinId(pinId);
     };
 
     const handleSavePin = () => {
@@ -282,9 +247,17 @@ export function Workspace() {
     };
 
     //deletes a pin
-    const handleDeletePin = () => {
-        if(!selectedPinId) return;}
-//fix
+    const handleDeletePin = (pinId: string) => {
+        const confirmed = window.confirm('Are you sure?');
+
+        if(confirmed){
+            setPins((previousPins) =>
+                previousPins.filter((item) => item.id !== pinId)
+            );
+        }
+
+        setSelectedPinId(null);
+    };
 
     //determines whether to edit or delete after clicking and the logic that follows each
     const handlePinClick = (pinId: string) => {
@@ -295,32 +268,14 @@ export function Workspace() {
 
         //edit
         if(pinActionMode === 'edit'){
-            setSelectedPinId(pinId);
-
-            setNewPinType(pin.item_type);
-            setNewPinNote(pin.note_content ?? '');
-            setNewPinMediaId(pin.media_id ?? '');
-
-            setIsEditingPin(true);
-            setIsAddPinOpen(true);
-
+            handleEditPin(pinId);
             setPinActionMode(null);
             return;
         }
 
         //delete
         if(pinActionMode === 'delete'){
-            const confirmed = window.confirm('Are you sure?');
-
-            if(confirmed){
-                setPins((previousPins) =>
-                    previousPins.filter(
-                        (item) => item.id !== pinId
-                    )
-                );
-            }
-
-            setSelectedPinId(null);
+            handleDeletePin(pinId);
             setPinActionMode(null);
             return;
         }
@@ -329,91 +284,14 @@ export function Workspace() {
         setSelectedPinId(pinId);
     };
 
-    //checks if the cursor is over the menu for pin movement
-    const isPointOverMenu = (clientX: number, clientY: number) => {
-        const menuBox = menuRef.current?.getBoundingClientRect();
-        if(!menuBox) return false;
-        return(
-            clientX >= menuBox.left && clientX <= menuBox.right &&
-            clientY >= menuBox.top && clientY <= menuBox.bottom
-        );
-    };
-
-    //dragging part 1: remembers pin and where inside we grabbed
-    const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>, pinId: string) => {
-        if(event.button !== 0) return; //left button starts a drag
-
-        //pin's coords
-        const pinBox = event.currentTarget.getBoundingClientRect();
-        setDragging({
-            id: pinId,
-            offsetX: event.clientX - pinBox.left,
-            offsetY: event.clientY - pinBox.top,
-        });
-
-        //keeps assigning the coords to the box, so that the cursor does not outrun it
-        event.currentTarget.setPointerCapture(event.pointerId);
-    };
-
-    //dragging pt 2: converts cursor pos into coords to update pin with
-    const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>, pinId: string) => {
-        if (!dragging || dragging.id !== pinId || !boardRef.current) return;
-
-        setIsOverMenu(isPointOverMenu(event.clientX, event.clientY));
-
-        const boardBox = boardRef.current.getBoundingClientRect();
-        const pinElement = event.currentTarget;
-
-        //cursor position relative to board, subtracts grab offset
-        //clamp is used to keep pins in board as previously mentioned
-        const newX = clamp(
-            event.clientX - boardBox.left -dragging.offsetX,
-            0,
-            boardBox.width - pinElement.offsetWidth
-        );
-
-        const newY = clamp(
-            event.clientY - boardBox.top -dragging.offsetY,
-            0,
-            boardBox.height - pinElement.offsetHeight
-        );
-
-        //copies quicknote pattern for mapping
-        setPins((previousPins)=>
-            previousPins.map((pin) =>
-                pin.id === pinId ? { ...pin, x:newX, y:newY} : pin
-            )
-        );
-    };
-
-    //drag pt 3: clear drag
-    const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>, pinId: string) => {
-        if(dragging?.id === pinId && isPointOverMenu(event.clientX, event.clientY)){
-            setPins((previousPins) =>
-                previousPins.map((pin) =>
-                    pin.id === pinId ? {...pin, placed: false} : pin
-                )
-            );
-        }
-        setDragging(null);
-        setIsOverMenu(false);
-    };
-
-    //cancel logic
-    const handlePointerCancel = () => {
-        setDragging(null);
-        setIsOverMenu(false);
-    };
-
-    //pin tile is dragged pt1
-    //pin tile refers to pins within the tray
-    const handleTileDragStart=(event: ReactDragEvent<HTMLDivElement>, pinId: string) => {
+    //pin is dragged pt 1
+    const handleDragStart=(event: ReactDragEvent<HTMLDivElement>, pinId: string) => {
         event.dataTransfer.setData('text/plain', pinId);
         event.dataTransfer.effectAllowed = 'move';
     };
 
     //handles when pin is dragged to board so it knows how to place accordingly
-    const handleBoardDragOver = (event: ReactDragEvent<HTMLDivElement>) => {
+    const handleDragOver = (event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
     }
 
@@ -424,10 +302,10 @@ export function Workspace() {
         const pinId = event.dataTransfer.getData('text/plain');
         if (!pinId || !boardRef.current) return;
 
-        const boardBox = boardRef.current?.getBoundingClientRect();
+        const boardBox = boardRef.current.getBoundingClientRect();
         //keeps pin in board and on cursor
         const x = clamp(event.clientX - boardBox.left -PIN_WIDTH_CONST/2, 0, boardBox.width -PIN_WIDTH_CONST);
-        const y = clamp(event.clientY - boardBox.top -PIN_HEIGHT_CONST/2, 0, boardBox.height - PIN_HEIGHT_CONST);
+        const y = clamp(event.clientY - boardBox.top -PIN_HEIGHT_CONST/2, 0, boardBox.height -PIN_HEIGHT_CONST);
         
         setPins((previousPins) =>
             previousPins.map((pin) =>
@@ -436,46 +314,54 @@ export function Workspace() {
         );
     };
 
+    //places pin back into menu when moved appropriately
+    const handleMenuDrop = (event: ReactDragEvent<HTMLElement>) => {
+        event.preventDefault();
+        const pinId = event.dataTransfer.getData('text/plain');
+
+        setPins((previousPins) =>
+            previousPins.map((pin) =>
+                pin.id === pinId ? {...pin, placed: false} : pin
+            )
+        );  
+    };
+
     return (
         <div className="workspace">
             <div 
                 className="board" 
                 ref={boardRef} 
-                onDragOver={handleBoardDragOver}
+                onDragOver={handleDragOver}
                 onDrop={handleBoardDrop}
             >
                 {/*pin logic for on the board*/}
                 {boardPins.map((pin) => {
-                    const mediaItem = 
-                        pin.item_type == 'media'
-                            ? mediaItems.find((item) => item.id === pin.media_id)
-                            : undefined;
+                    let pinClass = 'pin';
+                    if(selectedPinId === pin.id) pinClass += ' pin-selected';
                     
                     return(
                         <div
                             key={pin.id}
-                            className={`pin ${dragging?.id === pin.id ? 'pin dragging' : ''}
-                                ${selectedPinId === pin.id ? 'selected' : ''}
-                            }`}
+                            className={pinClass}
                             style={{left: pin.x, top:pin.y}}
+                            draggable
                             onClick={() => handlePinClick(pin.id)}
-                            onPointerDown={(event) => handlePointerDown(event, pin.id)}
-                            onPointerMove={(event) => handlePointerMove(event, pin.id)}
-                            onPointerUp={(event) => handlePointerUp(event, pin.id)}
-                            //onPointerCancel={handlePointerCancel}
+                            onDragStart={(event) => handleDragStart(event, pin.id)}
                         >
                             {renderPinContent(pin)}
                         </div>
-                )
-            })}
+                    )
+                })}
+
                 {/*navbar obv*/}
                 <WorkspaceNavbar />
-            </div>
+                </div>
             
             {/*sliding menu*/}
             <aside 
-                ref={menuRef}
-                className={`side-menu${isSideMenuOpen ? ' side-menu-open' : ''}${isOverMenu ? ' side-menu-drop' : ''}`}
+                className={`side-menu${isSideMenuOpen ? ' side-menu-open' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={handleMenuDrop}
             >
                 {/*sliding menu toggle*/}
                 <button
@@ -608,19 +494,22 @@ export function Workspace() {
                             <p>No Pins Found, add some above!</p>
                         ) : (
                             <div className="tray">
-                                {menuPins.map((pin) => (
-                                    <div 
-                                    key={pin.id} 
-                                    className={`tray-tile ${
-                                        selectedPinId === pin.id ? 'selected' : ''
-                                    }`}
-                                    draggable
-                                    onClick={() => handlePinClick(pin.id)}
-                                    onDragStart={(event) => handleTileDragStart(event, pin.id)}
-                                    >
-                                        {renderPinContent(pin)}
-                                    </div>
-                                ))}
+                                {menuPins.map((pin) => {
+                                    let tileClass = 'tray-tile';
+                                    if(selectedPinId === pin.id) tileClass += ' pin-selected';
+
+                                    return(
+                                        <div 
+                                            key={pin.id} 
+                                            className={tileClass}
+                                            draggable
+                                            onClick={() => handlePinClick(pin.id)}
+                                            onDragStart={(event) => handleDragStart(event, pin.id)}
+                                        >
+                                                {renderPinContent(pin)}
+                                        </div>
+                                    );                        
+                                })}
                             </div>
                         )}
 
@@ -707,7 +596,7 @@ export function Workspace() {
                         {newPinType === 'note' ? (
                             <textarea
                                 value={newPinNote}
-                                onChange={(event) =>
+                                onChange={(event) => 
                                     setNewPinNote(event.target.value)
                                 }
                                 placeholder="write pin note"
@@ -748,7 +637,7 @@ export function Workspace() {
                                 }
                                 disabled={!canAddPin}
                             >
-                                {isEditingPin ? 'Save Cahnges' : 'Add Pin'}
+                                {isEditingPin ? 'Save Changes' : 'Add Pin'}
                             </button>
 
                             <button
@@ -762,6 +651,6 @@ export function Workspace() {
                     </div>
                 </div>
             )}
-            </div>
+        </div>
     );
 }
