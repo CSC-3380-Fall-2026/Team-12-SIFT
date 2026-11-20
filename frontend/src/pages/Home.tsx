@@ -49,8 +49,6 @@ export function Home() {
       </section>
 
       <section id="center">
-
-        
         <div>
           <h1>This is a homepage! Test Test!</h1>
           <Link to="/workspace">Go to Workspace</Link>

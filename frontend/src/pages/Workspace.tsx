@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef} from 'react';
+import type { DragEvent as ReactDragEvent} from 'react';
 import { WorkspaceNavbar } from '../components/WorkspaceNavbar';
 import profileIcon from '../assets/profile-icon.png';
 import './Workspace.css';
@@ -13,6 +14,23 @@ type MediaItem = {
     size_bytes: number;
 };
 
+type Pin = {
+    id: string;
+    item_type: 'media' | 'note';
+    x: number;
+    y: number;
+    media_id: string | null;
+    note_content: string | null;
+    placed: boolean;
+};
+
+//keeps a min/max for the board
+const clamp = (value:number, min:number, max:number) =>
+    Math.min(Math.max(value, min), max);
+
+const PIN_WIDTH_CONST = 185;
+const PIN_HEIGHT_CONST = 130;
+
 export function Workspace() {
     // Stores the text entered by the user in the note editor.
     // React updates the screen whenever this value changes.
@@ -20,12 +38,34 @@ export function Workspace() {
     //different menu bools
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
     const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
-    const [isPinMenuOpen, setIsPinMenuOpen] = useState<boolean>(false);
+    const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
     //darkmode bool
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
     const [showCharCount, setShowCharCount] = useState<boolean>(true);
     const [autoSave, setAutoSave] = useState<boolean>(true);
+
+    //pins on the board vs menu, dragging process, board handle
+    const [pins, setPins] = useState<Pin[]> ([]);
+    const boardRef = useRef<HTMLDivElement>(null);
+
+    const boardPins = pins.filter((pin) => pin.placed);
+    const menuPins = pins.filter((pin) => !pin.placed);
+
+
+    //adding a pin via menu
+    const [newPinType, setNewPinType] = useState<'note' | 'media'>('note');
+    const [newPinMediaId, setNewPinMediaId] = useState<string>('');
+    const [newPinNote, setNewPinNote] = useState<string>('');
+
+    const canAddPin = newPinType === 'note' ? newPinNote.trim() !== '' : newPinMediaId !== '';
+    const [isAddPinOpen, setIsAddPinOpen] = useState(false);
+
+    const[selectedPinId, setSelectedPinId] = useState<string | null>(null);
+    const[pinActionMode, setPinActionMode] = useState<'edit' | 'delete' | null>(null);
+
+    const [isEditingPin, setIsEditingPin] = useState(false);
+
 
     // each quick note has an id from the database as well as its saved text
     type QuickNote = {
@@ -61,30 +101,6 @@ export function Workspace() {
     }, []);
 
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-    const [mediaLoading, setMediaLoading] = useState<boolean>(false);
-    const [mediaError, setMediaError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchMedia = async () => {
-            setMediaLoading(true);
-            setMediaError(null);
-            try {
-                const response = await fetch('http://127.0.0.1:8000/media');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch media files.');
-                }
-                const data: MediaItem[] = await response.json();
-                setMediaItems(data);
-            } catch (error) {
-                setMediaError(
-                    error instanceof Error ? error.message : 'Something went wrong.'
-                );
-            } finally {
-                setMediaLoading(false);
-            }
-        };
-        fetchMedia();
-    }, []);
 
     // creates a blank quick note and adds it to the array
     const addQuickNote = async () => {
@@ -139,10 +155,230 @@ export function Workspace() {
         }
     };
 
+    //shows the tiny previews of the pin within the tray
+    const renderPinContent = (pin: Pin) => {
+        if (pin.item_type === 'note') {
+            return <p className="pin-note">{pin.note_content}</p>;
+        }
+
+        const mediaItem = mediaItems.find((item) => item.id === pin.media_id);
+        return(
+            <div className="pin-media">
+                {mediaItem ? (
+                    <>
+                        <strong>{mediaItem.filename}</strong>
+                        <div>{mediaItem.media_type}</div>
+                    </>
+                ) : (
+                    <div>Media not found</div>
+                )}
+            </div>
+        );
+    };
+
+    //open and close pin menu
+    const openAddPin = () => {
+        setIsEditingPin(false);
+        setSelectedPinId(null);
+
+        setNewPinType('note');
+        setNewPinNote('');
+        setNewPinMediaId('');
+
+        setIsAddPinOpen(true);
+    };
+
+    const closePinMenu = () => {
+        setIsAddPinOpen(false);
+        setIsEditingPin(false);
+
+        setNewPinNote('');
+        setNewPinMediaId('');
+    };
+
+    //builds and adds pin with a temp id
+    const handleAddPin = () => {
+        const newPin: Pin = {
+            id: crypto.randomUUID(),
+            item_type: newPinType,
+            x: 0,
+            y: 0,
+            media_id: newPinType === 'media' ? newPinMediaId: null,
+            note_content: newPinType === 'note' ? newPinNote : null,
+            placed: false,
+        };
+
+        setPins((previousPins) => [...previousPins, newPin]);
+        
+        closePinMenu();
+    };
+
+    //loads the pin you want to edit into the window
+    const handleEditPin = (pinId: string) => {
+        const pin = pins.find((item) => item.id === pinId);
+
+        if(!pin) return;
+
+        setNewPinType(pin.item_type);
+        setNewPinNote(pin.note_content ?? '');
+        setNewPinMediaId(pin.media_id ?? '');
+
+        setIsEditingPin(true);
+        setIsAddPinOpen(true);
+        setSelectedPinId(pinId);
+    };
+
+    const handleSavePin = () => {
+        if (!selectedPinId || !canAddPin) return;
+
+        setPins((previousPins) =>
+            previousPins.map((pin) =>
+                pin.id === selectedPinId
+                ? {...pin,
+                    item_type: newPinType,
+                    note_content: newPinType === 'note' ? newPinNote : null,
+                    media_id: newPinType === 'media' ? newPinMediaId : null,
+                }
+                :pin
+            )
+        );
+        closePinMenu();
+        setSelectedPinId(null);
+    };
+
+    //deletes a pin
+    const handleDeletePin = (pinId: string) => {
+        const confirmed = window.confirm('Are you sure?');
+
+        if(confirmed){
+            setPins((previousPins) =>
+                previousPins.filter((item) => item.id !== pinId)
+            );
+        }
+
+        setSelectedPinId(null);
+    };
+
+    //determines whether to edit or delete after clicking and the logic that follows each
+    const handlePinClick = (pinId: string) => {
+        const pin = pins.find((item) => item.id === pinId)
+
+        //nothing equals null
+        if(!pin) return;
+
+        //edit
+        if(pinActionMode === 'edit'){
+            handleEditPin(pinId);
+            setPinActionMode(null);
+            return;
+        }
+
+        //delete
+        if(pinActionMode === 'delete'){
+            handleDeletePin(pinId);
+            setPinActionMode(null);
+            return;
+        }
+
+        //default
+        setSelectedPinId(pinId);
+    };
+
+    //pin is dragged pt 1
+    const handleDragStart=(event: ReactDragEvent<HTMLDivElement>, pinId: string) => {
+        event.dataTransfer.setData('text/plain', pinId);
+        event.dataTransfer.effectAllowed = 'move';
+    };
+
+    //handles when pin is dragged to board so it knows how to place accordingly
+    const handleDragOver = (event: ReactDragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+    }
+
+    //places pin where dropped (when let go of mouse)
+    const handleBoardDrop = (event: ReactDragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+
+        const pinId = event.dataTransfer.getData('text/plain');
+        if (!pinId || !boardRef.current) return;
+
+        const boardBox = boardRef.current.getBoundingClientRect();
+        //keeps pin in board and on cursor
+        const x = clamp(event.clientX - boardBox.left -PIN_WIDTH_CONST/2, 0, boardBox.width -PIN_WIDTH_CONST);
+        const y = clamp(event.clientY - boardBox.top -PIN_HEIGHT_CONST/2, 0, boardBox.height -PIN_HEIGHT_CONST);
+        
+        setPins((previousPins) =>
+            previousPins.map((pin) =>
+                pin.id === pinId ? {...pin, placed: true, x, y} : pin
+            )
+        );
+    };
+
+    //places pin back into menu when moved appropriately
+    const handleMenuDrop = (event: ReactDragEvent<HTMLElement>) => {
+        event.preventDefault();
+        const pinId = event.dataTransfer.getData('text/plain');
+
+        setPins((previousPins) =>
+            previousPins.map((pin) =>
+                pin.id === pinId ? {...pin, placed: false} : pin
+            )
+        );  
+    };
+
     return (
         <div className="workspace">
-            <div className="board">
-                <section className="profile-container">
+            <div 
+                className="board" 
+                ref={boardRef} 
+                onDragOver={handleDragOver}
+                onDrop={handleBoardDrop}
+            >
+                {/*pin logic for on the board*/}
+                {boardPins.map((pin) => {
+                    let pinClass = 'pin';
+                    if(selectedPinId === pin.id) pinClass += ' pin-selected';
+                    
+                    return(
+                        <div
+                            key={pin.id}
+                            className={pinClass}
+                            style={{left: pin.x, top:pin.y}}
+                            draggable
+                            onClick={() => handlePinClick(pin.id)}
+                            onDragStart={(event) => handleDragStart(event, pin.id)}
+                        >
+                            {renderPinContent(pin)}
+                        </div>
+                    )
+                })}
+
+                {/*navbar obv*/}
+                <WorkspaceNavbar />
+                </div>
+            
+            {/*sliding menu*/}
+            <aside 
+                className={`side-menu${isSideMenuOpen ? ' side-menu-open' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={handleMenuDrop}
+            >
+                {/*sliding menu toggle*/}
+                <button
+                    type="button"
+                    className="side-menu-toggle"
+                    onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
+                    aria-label={isSideMenuOpen ? 'Close menu' : 'Open Menu'}
+                    aria-expanded={isSideMenuOpen}
+                >
+                    {isSideMenuOpen? '->' : '<-'}
+                </button>
+
+                {/*content in the sliding menu*/}
+                {isSideMenuOpen &&(
+                    <div className="side-menu-content">
+                        <section className="profile-container">
+                    {/*profile and settings*/}
                     <button
                         type="button"
                         className="profile-button"
@@ -198,93 +434,223 @@ export function Workspace() {
                             )}
                         </div>                  
                     )}
+
                 </section>
 
-                <WorkspaceNavbar />
-            </div>
-            
-            <aside className={isPinMenuOpen ? 'pin-menu pin-menu-open': 'pin-menu'}>
-                <button
-                    type="button"
-                    className="pin-menu-toggle"
-                    onClick={() => setIsPinMenuOpen(!isPinMenuOpen)}
-                    aria-label={isPinMenuOpen ? 'Close menu' : 'Open Menu'}
-                    aria-expanded={isPinMenuOpen}
-                >
-                    {isPinMenuOpen? '->' : '<-'}
-                </button>
+                        {/*pin management, add edit delete*/}
+                        <section className="pin-management">
+                            <h2>Manage Pin</h2>
 
-                {isPinMenuOpen &&(
-                    <div className="pin-menu-content">
-                        <h2>Media Folder</h2>
-                            {mediaLoading ? (<p>Loading media...</p>) : mediaError ? 
-                                (<p>{mediaError}</p>) : mediaItems.length === 0 ? 
-                                (<p>The media folder is currently empty.</p>) : 
-                                (
-                                <ul>
-                                    {mediaItems.map((item) => (
-                                        <li key={item.id}>
-                                            <strong>{item.filename}</strong>
-                                            {' -- '}
-                                            {item.media_type}
-                                            {' -- '}
-                                            {(item.size_bytes / 1024).toFixed(1)} KB
-                                        </li>
-                                    ))}
-                                </ul>
+                            {/*add*/}
+                            <button
+                                type="button"
+                                className="add-pin-button"
+                                onClick={openAddPin}
+                            >
+                                + Add Pin
+                            </button>
+
+                            {/*edit with logic to press button then choose pin to edit*/}
+                            <button
+                                type="button"
+                                className={`add-pin-button ${ 
+                                    pinActionMode === 'edit' ? 'active' : ''
+                                }`}
+                                onClick={() =>
+                                    setPinActionMode(
+                                        pinActionMode === 'edit' ? null : 'edit'
+                                    )
+                                }
+                            >
+                                Edit Pin
+                            </button>
+
+                            {/*delete with logic same as edit*/}
+                            <button
+                                type="button"
+                                className={`add-pin-button ${ 
+                                    pinActionMode === 'delete' ? 'active' : ''
+                                }`}
+                                onClick={() =>
+                                    setPinActionMode(
+                                        pinActionMode === 'delete' ? null : 'delete'
+                                    )
+                                }
+                            >
+                                Delete Pin
+                            </button>
+
+                            {/*I THINK THIS IS WHERE TO HILIGHT*/}
+                            {selectedPinId && (
+                                <p className="pin-selection-info">
+                                    Pin Selected
+                                </p>
                             )}
-                        </div>
-                    )}
-                </aside>
-            {/* Note Editor and Quick Notes go here. */}
-            {/* Note editor with a live character counter.*/}
-            <section>
-                <h2>Note Editor</h2>
-                {/* The text area updates noteText whenever the user types or deletes text. */}
-                <textarea
-                    value={noteText}
-                    onChange={(event) => setNoteText(event.target.value)}
-                    placeholder="Write your note here..."
-                    rows={6}
-                    cols={45}
-                    aria-label="Note text"
-                />
+                        </section>
 
-                {/* The character count is calculated from the current note text.
-                    Future developers can add a character limit or word counter here. */}
-                {showCharCount && (
-                    <p>Characters: {noteText.length}</p>
+                        {/*tray for unused pins*/}
+                        <h2>Available Pins</h2>
+                        {menuPins.length === 0 ? (
+                            <p>No Pins Found, add some above!</p>
+                        ) : (
+                            <div className="tray">
+                                {menuPins.map((pin) => {
+                                    let tileClass = 'tray-tile';
+                                    if(selectedPinId === pin.id) tileClass += ' pin-selected';
+
+                                    return(
+                                        <div 
+                                            key={pin.id} 
+                                            className={tileClass}
+                                            draggable
+                                            onClick={() => handlePinClick(pin.id)}
+                                            onDragStart={(event) => handleDragStart(event, pin.id)}
+                                        >
+                                                {renderPinContent(pin)}
+                                        </div>
+                                    );                        
+                                })}
+                            </div>
+                        )}
+
+                        
+                        <h2>Note Editor</h2>
+                        {/* The text area updates noteText whenever the user types or deletes text. */}
+                        <textarea
+                            value={noteText}
+                            onChange={(event) => setNoteText(event.target.value)}
+                            placeholder="Write your note here..."
+                            rows={6}
+                            cols={45}
+                            aria-label="Note text"
+                        />
+
+                        {/* The character count is calculated from the current note text.
+                            Future developers can add a character limit or word counter here. */}
+                        {showCharCount && (
+                            <p>Characters: {noteText.length}</p>
+                        )}
+            
+                        {/* Quick Notes panel goes here. */}
+                        <section>
+                            <h2>Quick Notes</h2>
+                            <button onClick={addQuickNote}>Add Note</button>
+                            {/* displays message while saved notes are loading */}
+                            {quickNotesLoading && (
+                                <p>Loading Quick Notes...</p>
+                            )}
+                            {quickNotesError && (
+                                <p>{quickNotesError}</p>
+                            )}
+                            {!quickNotesLoading && !quickNotesError && quickNotes.length === 0 && (
+                                <p>No Quick Notes have been made yet.</p>
+                            )}
+                            {!quickNotesLoading && !quickNotesError && quickNotes.length > 0 && (
+                                quickNotes.map((note) => (
+                                    <div key={note.id}>
+                                        <textarea
+                                            value={note.text}
+                                            onChange={(event) => updateQuickNote(note.id, event.target.value)}
+                                            onBlur={(event) => saveQuickNote(note.id, event.target.value)}
+                                            rows={3}
+                                            placeholder="Write your Quick Note here..."
+                                />
+                                <button type="button" onClick={() => deleteQuickNote(note.id)}>Delete</button>
+                                </div>
+                                ))
+                            )}
+                        </section>   
+                    </div>
                 )}
-            </section>
-            {/* Quick Notes panel goes here. */}
-            <section>
-                <h2>Quick Notes</h2>
-                <button onClick={addQuickNote}>Add Note</button>
-                {/* displays message while saved notes are loading */}
-                {quickNotesLoading && (
-                    <p>Loading Quick Notes...</p>
-                )}
-                {quickNotesError && (
-                    <p>{quickNotesError}</p>
-                )}
-                {!quickNotesLoading && !quickNotesError && quickNotes.length === 0 && (
-                    <p>No Quick Notes have been made yet.</p>
-                )}
-                {!quickNotesLoading && !quickNotesError && quickNotes.length > 0 && (
-                    quickNotes.map((note) => (
-                        <div key={note.id}>
-                            <textarea
-                                value={note.text}
-                                onChange={(event) => updateQuickNote(note.id, event.target.value)}
-                                onBlur={(event) => saveQuickNote(note.id, event.target.value)}
-                                rows={3}
-                                placeholder="Write your Quick Note here..."
-                            />
-                            <button type="button" onClick={() => deleteQuickNote(note.id)}>Delete</button>
+            </aside>
+            {/*add pin window*/}
+            {isAddPinOpen && (
+                <div className="pin-menu-overlay">
+                    <div className="pin-menu">
+                        <h2>
+                            {isEditingPin ? 'Edit Pin' : 'Add Pin'}
+                        </h2>
+
+                        <div className="add-pin-type">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="pin-type"
+                                    checked={newPinType === 'note'}
+                                    onChange={() => setNewPinType('note')}
+                                />
+                                Note
+                            </label>
+
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="pin-type"
+                                    checked={newPinType === 'media'}
+                                    onChange={() => setNewPinType('media')}
+                                />
+                                Media
+                            </label>
                         </div>
-                    ))
-                )}
-            </section>
+
+                        {newPinType === 'note' ? (
+                            <textarea
+                                value={newPinNote}
+                                onChange={(event) => 
+                                    setNewPinNote(event.target.value)
+                                }
+                                placeholder="write pin note"
+                                rows={4}
+                                aria-label="Pin Note"
+                            />
+                        ):(
+                            <select
+                                value={newPinMediaId}
+                                onChange={(event) =>
+                                    setNewPinMediaId(event.target.value)
+                                }
+                                aria-label="Media Pin"
+                            >
+                                <option value="">
+                                    Choose a file
+                                </option>
+
+                                {mediaItems.map((item) =>
+                                    <option
+                                        key={item.id}
+                                        value={item.id}
+                                    >
+                                        {item.filename}
+                                    </option>
+                                )}
+                            </select>
+                        )}
+
+                        {/*look into pin sizing*/}
+
+                        {/*save and cancel buttons within add/edit windows*/}
+                        <div className="pin-menu-buttons">
+                            <button
+                                type="button"
+                                onClick={
+                                    isEditingPin ? handleSavePin : handleAddPin
+                                }
+                                disabled={!canAddPin}
+                            >
+                                {isEditingPin ? 'Save Changes' : 'Add Pin'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="cancel-button"
+                                onClick={closePinMenu}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
