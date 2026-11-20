@@ -2,13 +2,29 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import profileIcon from '../assets/profile-icon.png'
-
+import './Home.css'
+import siftLogo from '../assets/sift_logo.png'
+// heroImg from './src/assets/hero.png'
+//import reactLogo from './src/assets/react.svg'
+//import viteLogo from './src/assets/vite.svg'
+//import './App.css'
 
 export function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   return (
     <>
+    <div className="Signed-In-Home">
+
+    <div className="The-Logo">
+      <img src={siftLogo} alt="Sift Logo" className="sift-logo" />
+    </div>
+    <div className="The-Top-Box">
+      {/* There must be text here for it show up, and this should be altered-
+      -later for it to welcome the user by login name, but it's a temporary-
+      -message for now. */}
+          <h1> Welcome, USER</h1>
+        </div>
       <section className="home-profile-container">
         <button
           type="button"
@@ -45,7 +61,8 @@ export function Home() {
       <div className="ticks"></div>
 
       <div className="ticks"></div>
-      <section id="spacer"></section>
+      <section id="spacer"></section>  
+    </div>
     </>
   )
 }
