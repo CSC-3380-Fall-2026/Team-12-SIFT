@@ -4,10 +4,6 @@ import { Link } from 'react-router-dom'
 import profileIcon from '../assets/profile-icon.png'
 import './Home.css'
 import siftLogo from '../assets/sift_logo.png'
-// heroImg from './src/assets/hero.png'
-//import reactLogo from './src/assets/react.svg'
-//import viteLogo from './src/assets/vite.svg'
-//import './App.css'
 
 export function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -50,7 +46,6 @@ export function Home() {
 
       <section id="center">
         <div>
-          <h1>This is a homepage! Test Test!</h1>
           <Link to="/workspace">Go to Workspace</Link>
           <br />
           <Link to="/login">Log in</Link>
