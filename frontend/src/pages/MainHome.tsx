@@ -33,7 +33,7 @@ export const MainHome = () => {
             <div className="notepad-part">
                 <div className="written1">
                     <img src={corkboard} alt="Corkboard" className="corkboard" />
-                    <div className="board">
+                    <div className="boardhome">
                         <h3>What is SIFT?</h3>
                         <p className="small-text"> SIFT is a web-based note-taking application that brings text and images together in a single organized workspace.</p>
                     </div>
@@ -46,7 +46,7 @@ export const MainHome = () => {
             <div className="sticky-note-part">
                 <div className="written1">
                     <img src={corkboard} alt="Corkboard" className="corkboard" />
-                    <div className="board">
+                    <div className="boardhome">
                         <h3>What does SIFT do?</h3>
                         <p className="small-text2"> Users can create and edit notes, upload and annotate images, extract text data, and connect related content to make their information easier to search, organize, and navigate.</p>
                     </div>
@@ -58,7 +58,7 @@ export const MainHome = () => {
 
                     <div className="written1">
                         <img src={corkboard} alt="Corkboard" className="corkboard" />
-                        <div className="board">
+                        <div className="boardhome">
                             <h3>The goal of SIFT</h3>
                             <p className="small-text2">Our ultimate goal is to make note-taking a more visual, connected, and efficient experience rather as opposed to a painful and mundane activity.</p>
                         </div>

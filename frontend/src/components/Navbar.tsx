@@ -4,8 +4,6 @@ import "./Navbar.css"
 export function Navbar() {
     return (
         <div className="Navbar">
-        
-        
 
         {/* Will need to be edited later when the features-
         -required are added.

@@ -6,7 +6,7 @@
     width: 100%;
     height: 75px;
     color: #fff;
-    background-color: #0088FF;
+    background-color: #527FAE;
     padding: 24px 0;
     display: flex;
     flex-direction: row;
@@ -25,6 +25,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #000000;
+    color: #172F4D;
     text-decoration: none;
 }
