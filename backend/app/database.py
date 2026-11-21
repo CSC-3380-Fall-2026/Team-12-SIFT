@@ -5,14 +5,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-connection = psycopg.connect(
-    host="localhost",
-    port=5432,
-    dbname="sift",
-    user="postgres",
-    password=os.getenv("POSTGRES_PASSWORD")
-)
-
-print("Successfully connected to database!")
-
-connection.close()
+def get_db_connection():
+    return psycopg.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", "5432")),
+        dbname=os.getenv("DB_NAME", "sift"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+        connect_timeout=5
+    )

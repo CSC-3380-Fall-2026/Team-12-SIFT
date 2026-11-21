@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, UploadFile, File, Response
 from backend.app.schemas import UserCreate, Media
 from backend.app.users import UserResponse, create_user
@@ -31,8 +32,16 @@ load_dotenv()
 # start fastapi (backend) application
 app = FastAPI()
 
-# fastapi endpoint
+# middleware call
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
+# fastapi endpoint
 @app.get("/")
 def root():
     return {"message": "SIFT's backend is running!"}

@@ -1,7 +1,6 @@
-import psycopg
 from pydantic import BaseModel
 from uuid import UUID
-from backend.app.annotations import get_db_connection
+from backend.app.database import get_db_connection
 from backend.app.schemas import UserCreate
 from pwdlib import PasswordHash
 
