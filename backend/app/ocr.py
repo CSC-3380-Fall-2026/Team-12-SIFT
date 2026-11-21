@@ -28,9 +28,12 @@ async def extract_text(file_data: bytes, filename: str) -> str:
         response.raise_for_status()
         result = response.json()
         if result.get("IsErroredOnProcessing"):
+            error_msg = result.get("ErrorMessage", "Error: Failure in processing OCR.")
+            if isinstance(error_msg, list):
+                error_msg = ", ".join(str(msg) for msg in error_msg)
             raise HTTPException(
                 status_code=422,
-                detail=result.get("ErrorMessage", "OCR processing failure.")
+                detail=error_msg
             )
         results_parsed = result.get("ParsedResults", [])
         if not results_parsed:
@@ -38,8 +41,14 @@ async def extract_text(file_data: bytes, filename: str) -> str:
                 status_code=422,
                 detail="Unable to extract any text."
             )
+        pages_text = []
         for page in results_parsed:
-            return "\n".join(page.get("ParsedText", "")).strip()
+            if page.get("ParsedText") and page.get("ParsedText").strip():
+                pages_text.append(page.get("ParsedText").strip())
+        if not pages_text:
+            raise HTTPException(status_code=422, detail="Warning: Unable to extract any text.")
+        extracted_text = "\n".join(pages_text)
+        return extracted_text
     except httpx.HTTPError:
         raise HTTPException(
             status_code=502,

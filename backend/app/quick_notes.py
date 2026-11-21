@@ -1,8 +1,7 @@
-from backend.app.annotations import get_db_connection
-from dataclasses import dataclass
+from backend.app.database import get_db_connection
+from pydantic import BaseModel
 
-@dataclass(frozen=True)
-class QuickNote:
+class QuickNote(BaseModel):
     id: int
     text: str
 

@@ -1,9 +1,5 @@
-import os
-import psycopg
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
-
-load_dotenv()
+from backend.app.database import get_db_connection
 
 class AnnotationCreate(BaseModel):
     user_id: str
@@ -14,16 +10,6 @@ class AnnotationCreate(BaseModel):
 
 class Annotation(AnnotationCreate):
     id: int
-
-def get_db_connection():
-    return psycopg.connect(
-        host="localhost",
-        port=5432,
-        dbname="sift",
-        user="postgres",
-        password=os.getenv("POSTGRES_PASSWORD"),
-        connect_timeout=5,
-    )
 
 def create_annotation(annotation: AnnotationCreate) -> Annotation:
     with get_db_connection() as connection:

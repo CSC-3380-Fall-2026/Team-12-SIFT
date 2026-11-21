@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal
 from uuid import UUID
 from backend.app.schemas import Media
-from backend.app.annotations import get_db_connection
+from backend.app.database import get_db_connection
 
 MediaType = Literal["image", "document"]
 
