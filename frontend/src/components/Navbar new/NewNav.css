@@ -1,0 +1,51 @@
+
+
+/*the actual blue bar across the top*/
+.site-navbar{
+    width: 100%;
+    height: var(--navbar-height);
+    flex-shrink: 0;
+    padding: 0 23px;
+    box-sizing: border-box;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #527FAE;
+
+    position: relative;
+    z-index: 100;
+}
+
+/*formatting for items along the left and right sides*/
+.site-navbar-left, .site-navbar-right{
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+/*font stuff for navbar*/
+.site-navbar a{
+    color: #172F4D;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/*the formatting for the welcome user message within My Boards*/
+.site-navbar-welcome{
+    color: #172F4D;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+/*the logo formatting*/
+.sift_logo{
+    display: flex;
+    align-items: center;
+}
+
+.sift_logo img{
+    display: block;
+    height: 57px;
+    width: auto;
+}

@@ -1,10 +1,10 @@
-import { Navbar } from "./components/Navbar"
+import { MyBoardsMenu } from "./components/MyBoardsMenu"
 import { Outlet } from "react-router-dom";
 
 export function NeedNavbar() {
     return (
         <>
-            <Navbar />
+            <MyBoardsMenu />
             <main>
                 <Outlet />
             </main>

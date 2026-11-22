@@ -6,7 +6,7 @@
     align-items: center;
     justify-content: center;
     gap: 20px;
-    height: 100vh;
+    height: calc(100vh - var(--navbar-height));
     background-size: cover;
 }
 

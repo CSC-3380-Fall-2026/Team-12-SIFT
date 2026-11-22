@@ -1,4 +1,5 @@
 
+/*the actual pin formatting*/
 .pin{
     position: absolute;
     z-index: 1;
@@ -15,6 +16,7 @@
     user-select: none;
 }
 
+/*formatting for pin text*/
 .pin-note{
     margin: 0;
     font-size: 14px;
@@ -22,13 +24,14 @@
     overflow-wrap: anywhere;
 }
 
+/*supposedly to do media i kinda just copied the note one/*
+/*needs editing*/
 .pin-media{
     font-size: 13px;
     overflow-wrap: anywhere;
 }
 
-/* menu pin*/
-
+/*pin management stuff*/
 .pin-management{
     display: flex;
     flex-direction: column;
@@ -40,6 +43,7 @@
     margin-bottom: 4px;
 }
 
+/*formatting for the selected pin stuff*/
 .pin-selection-info{
     font-size: 12px;
     margin: 0;
@@ -50,6 +54,7 @@
     outline-offset: 2px;
 }
 
+/*formatting for the overlay portion menu to add/edit pins*/
 .pin-menu-overlay{
     position: fixed;
     inset: 0;
@@ -61,6 +66,7 @@
     background-color: #a4907a60;
 }
 
+/*further formatting within window*/
 .pin-menu{
     display: flex;
     flex-direction: column;
@@ -81,6 +87,7 @@
     margin: 0;
 }
 
+
 .pin-menu textarea,
 .pin-menu select{
     box-sizing: border-box;
@@ -94,6 +101,7 @@
 .pin-menu textarea{
     resize: vertical;
 }
+
 
 .pin-menu-buttons button{
     display: flex;
@@ -141,11 +149,13 @@
     color:#F7F3ED;
 }
 
+/*wholeeee workspace*/
 .workspace{
     display: flex;
-    height: 100vh;
+    height: calc(100vh - var(--navbar-height));
 }
 
+/*board portion of the workspace*/
 .board{
     position: relative;
     z-index: 0;
@@ -166,6 +176,7 @@
     z-index: -1;
 }
 
+/*side menu closed formatting*/
 .side-menu{
     display: flex;
     flex-direction: column;
@@ -179,12 +190,14 @@
     transition: width 0.3s ease;
 }
 
+/*side menu open formatting*/
 .side-menu-open{
     width: 220px;
     padding: 12px 8px;
     background-color: #527FAE;
 }
 
+/*the toggle to open menu format*/
 .side-menu-toggle{
     align-self: flex-start;
     background: none;
@@ -195,6 +208,7 @@
     cursor: pointer;
 }
 
+/*format for content within menu*/
 .side-menu-content{
     flex: 1;
     overflow-y: auto;
@@ -203,6 +217,7 @@
     color: #F7F3ED
 }
 
+/*display for stored pins*/
 .tray{
     display: grid;
     grid-template-columns: repeat(2,1fr);
@@ -210,6 +225,7 @@
     margin-bottom: 20px;
 }
 
+/*formatting for the pins "tiles" within the stored menu*/
 .tray-tile{
     aspect-ratio: 1;
     box-sizing: border-box;
@@ -222,6 +238,7 @@
     user-select: none;
 }
 
+/*dropdown formatting for profile OBSOLETE
 .settings-dropdown {
     background-color: white;
     border: 1px solid #bbb;
@@ -249,8 +266,9 @@
 
 .settings-dropdown input[type="checkbox"] {
     cursor: pointer;
-}
+}*/
 
+/*the navbar at the bottom also might be obsolete*/
 .editing-toolbar {
     position: absolute;
     bottom: 20px;
@@ -285,6 +303,7 @@
     background-color: #f0f0f0;
 }
 
+/*profile container also maybe obsolete again oops
 .profile-container {
     position: absolute;
     top: 20px;
@@ -323,4 +342,4 @@
     color: #706879;
     font-size: 16px;
     cursor: pointer;
-}
+}*/
