@@ -1,40 +1,32 @@
 
-import './App.css'
-import { HashRouter as Router, Route, Routes } from 'react-router-dom'
-import { Workspace } from './pages/Workspace'
-import { Home } from './pages/Home'
-import { Login } from './pages/Login'
-import { Register } from './pages/Register'
-import { NeedNavbar } from './NeedNavbar'
-import { NeedHomeHeader } from './NeedHomeHeader'
-import { NeedHomeFooter } from './NeedHomeFooter'
-import { MainHome } from './pages/MainHome'
+import './App.css';
+import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 
+import { Workspace } from './pages/Workspace';
+import { Home } from './pages/Home';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { MainHome } from './pages/MainHome';
+
+import { AppLayout } from './AppLayout';
+
+//routing for the site navbar is here
+//uses app layout to decide what goes where
 function App() {
  
   return (
     <Router>
       <Routes>
-        //if you want a page to have a Navbar, it must included under here. Otherwise, put it with login and register.
-        <Route element={<NeedNavbar />}>
+        <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
-        </Route>
-        
-      
-        <Route path="/workspace" element={<Workspace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        //for main home page ONLY, because it needs the header and footer.
-        <Route element={<NeedHomeHeader />}>
-          <Route element={<NeedHomeFooter />}>
-            <Route path="/mainhome" element={<MainHome />} />
-          </Route>
+          <Route path="/workspace" element={<Workspace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/mainhome" element={<MainHome />} />
         </Route>
       </Routes>
-     </Router>
+    </Router>
   )
-  
 }
 
 export default App

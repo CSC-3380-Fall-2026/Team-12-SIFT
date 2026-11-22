@@ -14,19 +14,18 @@
   }
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+.app-body{
+  display: flex;
+  flex: 1;
+}
+
+.app-main{
+  flex: 1;
+  min-width: 0;
 }
 
 .home-profile-container {
-  position: absolute;
-  top: 20px;
-  right: 10px;
-  z-index: 20;
+  position: relative;
 }
 
 .home-profile-container .profile-button {
@@ -49,7 +48,6 @@
   right: 0;
   left: auto;
   width: 200px;
-  height: 130px;
   padding: 12px;
   box-sizing: content-box;
   background-color: white;
@@ -57,6 +55,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   z-index: 10;
+  margin-top: 12px;
 }
 
 .home-profile-container .profile-menu-option {

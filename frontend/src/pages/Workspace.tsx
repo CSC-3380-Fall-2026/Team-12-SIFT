@@ -377,69 +377,10 @@ export function Workspace() {
                 {/*content in the sliding menu*/}
                 {isSideMenuOpen &&(
                     <div className="side-menu-content">
-                        <section className="profile-container">
-                    {/*profile and settings*/}
-                    <button
-                        type="button"
-                        className="profile-button"
-                        onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        aria-label="Profile"
-                        aria-expanded={isProfileOpen}
-                    >
-                        <img
-                            src={profileIcon}
-                            alt=""
-                            className="profile-icon"
-                        />
-                    </button>
-
-                    {isProfileOpen && (
-                        <div className="settings-dropdown profile-dropdown">
-                            <button
-                                type="button"
-                                className="profile-menu-option"
-                                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                                aria-expanded={isSettingsOpen}
-                            >
-                                 Settings {isSettingsOpen ? '▾' : '▸'}
-                            </button>
-
-                            {isSettingsOpen && (
-                                <>
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={isDarkMode}
-                                            onChange={(event) => setIsDarkMode(event.target.checked)}
-                                        />
-                                        Dark Mode
-                                    </label>
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={showCharCount}
-                                            onChange={(event) => setShowCharCount(event.target.checked)}
-                                        />
-                                        Show Character Count
-                                    </label>
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={autoSave}
-                                            onChange={(event) => setAutoSave(event.target.checked)}
-                                        />
-                                        Enable Auto-Save
-                                    </label>
-                                </>
-                            )}
-                        </div>                  
-                    )}
-
-                </section>
 
                         {/*pin management, add edit delete*/}
                         <section className="pin-management">
-                            <h2>Manage Pin</h2>
+                            <h2>Manage Pins</h2>
 
                             {/*add*/}
                             <button
@@ -447,7 +388,7 @@ export function Workspace() {
                                 className="add-pin-button"
                                 onClick={openAddPin}
                             >
-                                + Add Pin
+                                Add Pin
                             </button>
 
                             {/*edit with logic to press button then choose pin to edit*/}
