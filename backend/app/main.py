@@ -1,7 +1,16 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, HTTPException, UploadFile, File, Response
+from fastapi import FastAPI, HTTPException, UploadFile, File, Response, Depends
 from backend.app.schemas import UserCreate, Media
-from backend.app.users import UserResponse, create_user
+from backend.app.users import (
+    create_user,
+    UserResponse,
+    UserLogin,
+    UserProfileUpdate,
+    PasswordChange,
+    authenticate_user,
+    update_user_profile,
+    update_user_password
+)
 from backend.app.annotations import (
     Annotation,
     AnnotationCreate,
@@ -22,6 +31,7 @@ from backend.app.quick_notes import (
     update_quick_note,
     delete_quick_note
 )
+from backend.app.auth import TokenResponse, create_access_token, get_current_user
 from psycopg.errors import UniqueViolation
 from uuid import UUID
 
@@ -137,6 +147,48 @@ def register_user(user: UserCreate):
             status_code=409,
             detail="Username or email address already in use. Please try a different one."
         )
+
+# user auth endpoints
+@app.post("/login", response_model=TokenResponse)
+def login_user_endpoint(credentials: UserLogin):
+    user = authenticate_user(credentials.identifier, credentials.password)
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Error: Invalid username/email or password."
+        )
+    access_token = create_access_token(user.id)
+    return TokenResponse(access_token=access_token, user=user)
+
+@app.get("/users/me", response_model=UserResponse)
+def get_current_user_endpoint(current_user: UserResponse = Depends(get_current_user)):
+    return current_user
+
+@app.patch("/users/me", response_model=UserResponse)
+def update_user_profile_endpoint(update: UserProfileUpdate, current_user: UserResponse = Depends(get_current_user)):
+    if update.username is None and update.email is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Error: Username cannot be blank."
+        )
+    try:
+        updated_user = update_user_profile(current_user.id, update)
+    except updated_user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Error: User not found."
+        )
+    return updated_user
+
+@app.put("/users/me/password")
+def update_user_password_endpoint(payload: PasswordChange, current_user: UserResponse = Depends(get_current_user)):
+    updated = update_user_password(current_user.id, payload.curr_password, payload.new_password)
+    if not updated:
+        raise HTTPException(
+            status_code=401,
+            detail="Error: Current password is incorrect."
+        )
+    return {"message": "Success! Password was updated."}
 
 # quick note endpoints
 @app.post("/quick-notes", response_model=QuickNote, status_code=201)
